@@ -151,10 +151,85 @@ function testUpdateCut(string $point): void
     );
 }
 
+function testConcurrentEditors(): void
+{
+    [$vault, $writer] = fixture('two-editors');
+    $note = $writer->write($vault, null, 'Original', 'Versão inicial concorrente');
+    $id = $note->getKey();
+
+    DB::disconnect('pgsql');
+    $children = [];
+    $signals = [];
+
+    foreach (['A', 'B'] as $editor) {
+        $pipes = stream_socket_pair(STREAM_PF_UNIX, STREAM_SOCK_STREAM, 0);
+        requireState(is_array($pipes), 'synchronization pipes');
+
+        $pid = pcntl_fork();
+        requireState($pid !== -1, 'concurrent fork');
+
+        if ($pid === 0) {
+            fclose($pipes[0]);
+            fread($pipes[1], 1);
+            fclose($pipes[1]);
+            DB::purge('pgsql');
+
+            try {
+                (new NoteWriteService)->write(
+                    $vault, Note::findOrFail($id),
+                    'Editor '.$editor, 'Corpo sintético do editor '.$editor, 1,
+                );
+                exit(0);
+            } catch (HttpException $error) {
+                exit($error->getStatusCode() === 409 ? 9 : 41);
+            } catch (Throwable $error) {
+                exit(42);
+            }
+        }
+
+        fclose($pipes[1]);
+        $children[] = $pid;
+        $signals[] = $pipes[0];
+    }
+
+    foreach ($signals as $signal) {
+        fwrite($signal, 'x');
+        fclose($signal);
+    }
+
+    $codes = [];
+    foreach ($children as $pid) {
+        requireState(pcntl_waitpid($pid, $status) === $pid, 'concurrent waitpid');
+        requireState(pcntl_wifexited($status), 'concurrent child exit');
+        $codes[] = pcntl_wexitstatus($status);
+    }
+
+    DB::purge('pgsql');
+    sort($codes);
+    requireState($codes === [0, 9], 'exatamente uma edicao e um conflito 409');
+    $current = Note::findOrFail($id);
+    requireState($current->version === 2, 'versao publica apos disputa');
+    requireState(
+        NoteRevision::query()->where('note_id', $id)->where('status', 'committed')->count() === 2,
+        'duas revisoes confirmadas: original e vencedora',
+    );
+    requireState(
+        ! NoteRevision::query()->where('note_id', $id)->where('status', 'prepared')->exists(),
+        'nenhuma operacao preparada apos disputa',
+    );
+    requireState(
+        in_array($writer->read($current), [
+            'Corpo sintético do editor A', 'Corpo sintético do editor B',
+        ], true),
+        'conteudo vencedor integro',
+    );
+}
+
 testNewNoteCut();
 testUpdateCut('after_file_write');
 testUpdateCut('before_commit');
 testUpdateCut('after_commit');
 testUpdateCut('before_file_write');
+testConcurrentEditors();
 
-fwrite(STDOUT, "APROVADO: SIGKILL real em criacao, escrita, pre-commit, pos-commit, objeto ausente e reconciliacao repetida.\n");
+fwrite(STDOUT, "APROVADO: SIGKILL real em criacao, escrita, pre-commit, pos-commit, objeto ausente, dois editores reais e reconciliacao repetida.\n");

@@ -77,3 +77,10 @@ Em laboratório, com banco/volume íntegros e acesso exclusivo do operador, exec
 O modo **php artisan notes:reconcile --apply** confirma somente operações preparadas com arquivo e hash válidos e versão-base inalterada. Executar após cópia consistente protegida e verificação de ausência de outros escritores; inspecionar a saída e repetir no mesmo conjunto **somente se o estado anterior for conhecido**. Ausência de arquivo, hash divergente, base desatualizada ou operação desconhecida exigem investigação manual — **nunca remover objetos órfãos automaticamente**.
 
 O comando não recria objetos perdidos, não recupera rascunhos nunca persistidos e não migra notas legadas. Para notas anteriores ao protocolo, a escrita retorna 503 até execução de processo de migração com backup/restauração previamente comprovados, conforme [ADR 0002](DECISOES/0002-consistencia-de-notas.md). Não executar reversão de migration de revisões com dados existentes; a restauração deve ser do par banco/volume em ambiente isolado.
+
+
+## Ensaio de interrupção em ambiente descartável
+
+A CI acrescenta uma execução separada de **tests/integration/crash_notes_process.php**, com SIGKILL real em processo filho, PostgreSQL 17 de teste e arquivo privado sintético. O harness recusa execução fora de CI, sem chave de teste explícita, ou fora de banco PostgreSQL local com nome terminando em _test. Não executá-lo no NAS/host de dados reais. Ele não faz rollback ou limpeza de volumes; o runner CI é descartável.
+
+Mesmo com status verde, esse teste não cobre queda de energia, cache do controlador, fsync, backup/restore completo nem sincronismo físico do PostgreSQL com o storage. Tais itens permanecem bloqueadores de produção.

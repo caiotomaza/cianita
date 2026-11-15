@@ -137,7 +137,7 @@ jobs:
         with:
           php-version: '8.4'
           tools: composer:v2
-          extensions: mbstring, dom, pdo_pgsql, xml, curl, fileinfo
+          extensions: mbstring, dom, pdo_pgsql, xml, curl, fileinfo, pcntl, posix
           coverage: none
       - name: Instalar dependencias PHP
         run: composer install --no-interaction --prefer-dist --no-progress
@@ -148,3 +148,10 @@ jobs:
           cp .env.example .env
           php artisan key:generate --force
           php artisan test --filter='(NoteConsistencyTest|VaultAndNoteTest)'
+      - name: SIGKILL real e reconciliação em PostgreSQL descartável
+        env:
+          APP_ENV: testing
+          CIANITA_CRASH_TEST: '1'
+        run: |
+          php artisan migrate --force
+          php tests/integration/crash_notes_process.php

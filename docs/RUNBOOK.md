@@ -39,7 +39,12 @@ curl --fail --silent --show-error http://127.0.0.1:8080/up
 curl --fail --silent --show-error --output /dev/null http://127.0.0.1:8080/login
 ```
 
-Ajustar a porta dos comandos HTTP se `CIANITA_PORT` for diferente. Banco e Redis **não devem** ter porta publicada: `docker compose port db 5432` e `docker compose port redis 6379` devem retornar ausência de publicação; não confundir esse retorno não zero com falha do serviço.
+Ajustar a porta dos comandos HTTP se `CIANITA_PORT` for diferente. Banco e Redis **não devem** ter bindings de portas no host. Inspecionar os bindings reais (valor `null` para a porta interna indica ausência de publicação):
+
+```bash
+docker inspect --format '{{json .NetworkSettings.Ports}}' "$(docker compose ps -q db)"
+docker inspect --format '{{json .NetworkSettings.Ports}}' "$(docker compose ps -q redis)"
+```
 
 O script `scripts/smoke_laboratorio.py` foi ligado ao job Docker da CI: usa usuários/notas fictícios, verifica CSRF, isolamento, CRUD, versão 409 e persistência após restart de serviços. Só é apropriado para **volumes novos e descartáveis**: `CIANITA_SMOKE_LAB=1 python3 scripts/smoke_laboratorio.py`. Não executar em instância com dados importantes, porque o script altera dados e reinicia serviços. A execução da CI é evidência limitada àquele runner e SHA; um host real/NAS continua **não testado**.
 

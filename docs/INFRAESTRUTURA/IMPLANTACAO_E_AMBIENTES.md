@@ -49,9 +49,9 @@ docker compose exec -T db sh -c 'pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB
 docker compose exec -T redis redis-cli ping
 curl --fail --silent --show-error http://127.0.0.1:8080/up
 curl --fail --silent --show-error --output /dev/null http://127.0.0.1:8080/login
-# Os comandos seguintes NÃO devem retornar porta publicada:
-docker compose port db 5432
-docker compose port redis 6379
+# Para PostgreSQL e Redis, bindings internos devem ter valor null:
+docker inspect --format '{{json .NetworkSettings.Ports}}' "$(docker compose ps -q db)"
+docker inspect --format '{{json .NetworkSettings.Ports}}' "$(docker compose ps -q redis)"
 ```
 
 Se `CIANITA_PORT` for diferente de 8080, adequar as URLs HTTP. A CI adiciona um smoke automatizado de autenticação real, CRUD e negações com contas artificiais. **Somente em ambiente novo, descartável e sem notas valiosas**, após os passos anteriores, executá-lo com:

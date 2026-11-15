@@ -159,11 +159,19 @@ def main():
     if not 1 <= port <= 65535:
         raise RuntimeError("Porta inválida")
     base = f"http://127.0.0.1:{port}"
-    for service, target in (("db", "5432"), ("redis", "6379")):
-        result = subprocess.run(["docker", "compose", "port", service, target],
-                                capture_output=True, text=True, timeout=15)
-        if result.returncode == 0 or result.stdout.strip():
-            raise RuntimeError(f"{service} expõe porta no host")
+    for service in ("db", "redis"):
+        container = subprocess.check_output(
+            ["docker", "compose", "ps", "-q", service], text=True, timeout=15
+        ).strip()
+        if not container:
+            raise RuntimeError(f"Contêiner {service} ausente")
+        raw = subprocess.check_output(
+            ["docker", "inspect", "--format", "{{json .NetworkSettings.Ports}}", container],
+            text=True, timeout=15,
+        )
+        bindings = json.loads(raw)
+        if any(host_bindings for host_bindings in bindings.values()):
+            raise RuntimeError(f"{service} tem porta publicada no host")
     command("docker", "compose", "exec", "-T", "db", "sh", "-c",
             'pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"')
     command("docker", "compose", "exec", "-T", "redis", "redis-cli", "ping")

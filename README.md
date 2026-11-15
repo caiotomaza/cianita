@@ -62,7 +62,7 @@ O último comando ativa o worker opcional. `docker compose down` preserva volume
 
 ### Smoke test de laboratório (CI e host descartável)
 
-O workflow `.github/workflows/ci.yml` foi configurado para executar `scripts/smoke_laboratorio.py` **após** o build e as migrations PostgreSQL. O teste cria duas contas artificiais pelo comando `cianita:user:create` em pseudoterminal, realiza login real com CSRF, testa CRUD, acesso negado entre usuários, HTTP 409, leitura após reinício de app/DB/Redis e ausência de portas publicadas para banco/Redis. **Passagem do teste depende do resultado da CI do SHA correspondente.** Não é teste de backup/restore nem de navegador E2E.
+O workflow `.github/workflows/ci.yml` foi configurado para executar `scripts/smoke_laboratorio.py` **após** o build e as migrations PostgreSQL. O teste cria duas contas artificiais pelo comando `cianita:user:create` em pseudoterminal, realiza login real com CSRF, testa CRUD, acesso negado entre usuários, HTTP 409, leitura após reinício de app/DB/Redis e ausência de bindings de portas do banco/Redis no host. **Passagem do teste depende do resultado da CI do SHA correspondente.** Não é teste de backup/restore nem de navegador E2E.
 
 Somente em **instância descartável, nova, com volumes de laboratório e sem dados importantes**, já inicializada:
 

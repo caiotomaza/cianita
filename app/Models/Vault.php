@@ -24,7 +24,7 @@ class Vault extends Model
 
     public function members(): BelongsToMany
     {
-        return $this->belongsToMany(User::class)->withPivot('role')->withTimestamps();
+        return $this->belongsToMany(User::class, 'vault_user')->withPivot('role')->withTimestamps();
     }
 
     public function notes(): HasMany

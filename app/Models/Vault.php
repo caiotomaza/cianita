@@ -12,6 +12,11 @@ class Vault extends Model
 {
     protected $fillable = ['name', 'owner_id'];
 
+    protected function casts(): array
+    {
+        return ['owner_id' => 'integer'];
+    }
+
     public function owner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'owner_id');

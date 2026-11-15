@@ -13,10 +13,16 @@ class VaultController extends Controller
     {
         Gate::authorize('viewAny', Vault::class);
 
-        return response()->json([
-            'data' => Vault::query()->visibleTo($request->user())
-                ->orderBy('name')->get(['id', 'name', 'owner_id', 'created_at']),
-        ]);
+        $vaults = Vault::query()->visibleTo($request->user())
+            ->orderBy('name')->get(['id', 'name', 'owner_id', 'created_at'])
+            ->map(fn (Vault $vault): array => [
+                'id' => $vault->id,
+                'name' => $vault->name,
+                'owner_id' => $vault->owner_id,
+                'can_edit' => Gate::allows('update', $vault),
+            ]);
+
+        return response()->json(['data' => $vaults]);
     }
 
     public function store(Request $request): JsonResponse

@@ -15,7 +15,7 @@ class Note extends Model
 
     protected function casts(): array
     {
-        return ['version' => 'integer'];
+        return ['version' => 'integer', 'vault_id' => 'integer'];
     }
 
     public function vault(): BelongsTo

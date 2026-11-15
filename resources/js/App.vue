@@ -99,6 +99,7 @@ async function selectNote(id: string): Promise<void> {
 }
 
 async function createVault(): Promise<void> {
+    if (!canDiscard()) return;
     const name = window.prompt('Nome do novo cofre:')?.trim();
     if (!name) return;
     busy.value = true;
@@ -128,6 +129,9 @@ async function createNote(): Promise<void> {
         });
         notes.value.push(result.data);
         notes.value.sort((a, b) => a.title.localeCompare(b.title));
+        currentNote.value = null;
+        draftTitle.value = '';
+        draftBody.value = '';
         await selectNote(result.data.id);
         message.value = 'Nota criada';
     } catch (reason) {

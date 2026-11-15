@@ -9,7 +9,7 @@ COPY vite.config.ts tsconfig.json ./
 RUN npm run build
 
 FROM dunglas/frankenphp:1-php8.4-bookworm AS php-base
-RUN install-php-extensions pdo_pgsql pdo_sqlite intl zip opcache pcntl redis
+RUN install-php-extensions pdo_pgsql pdo_sqlite intl zip opcache pcntl redis mbstring xml
 
 FROM php-base AS dependencies
 WORKDIR /app

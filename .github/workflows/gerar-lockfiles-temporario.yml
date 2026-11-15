@@ -1,0 +1,60 @@
+name: Gerar lockfiles (temporário)
+
+on:
+  pull_request:
+    branches: [develop]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  resolver:
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'ci/dependencias-reprodutiveis' }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ci/dependencias-reprodutiveis
+          persist-credentials: true
+      - name: Verificar manifestos e ausência de lockfiles
+        id: pendencia
+        shell: bash
+        run: |
+          test -f composer.json && test -f package.json
+          if test -f composer.lock || test -f package-lock.json; then
+            echo "Os lockfiles já existem; não realizar nova resolução." >&2
+            exit 1
+          fi
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          tools: composer:v2
+          extensions: mbstring, dom, xml, curl, fileinfo, zip
+          coverage: none
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Resolver dependências reais pelos gerenciadores
+        shell: bash
+        run: |
+          composer --version
+          php -v
+          node --version
+          npm --version
+          composer update --no-install --no-scripts --no-plugins --no-interaction --prefer-dist --no-progress
+          npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+          composer validate --strict --no-check-publish
+          npm ci --ignore-scripts --no-audit --no-fund
+          git add -- composer.lock package-lock.json
+          git diff --cached --check
+          test -n "$(git diff --cached --name-only)"
+      - name: Commit exclusivo dos lockfiles na branch temporária
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'build(dependencias): versiona resoluções Composer e npm'
+          git push origin HEAD:refs/heads/ci/dependencias-reprodutiveis

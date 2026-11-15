@@ -66,7 +66,7 @@ O índice abaixo continua sendo a navegação canônica. Não criar uma segunda 
 ### Decisões e atribuições
 
 - [ADR 0001 — monólito modular](DECISOES/0001-monolito-modular.md) — aceita.
-- [ADR 0002 — consistência DB/filesystem](DECISOES/0002-consistencia-de-notas.md) — proposta.
+- [ADR 0002 — consistência DB/filesystem](DECISOES/0002-consistencia-de-notas.md) — decisão experimental em validação, não homologada.
 - [ADR 0003 — API e integração](DECISOES/0003-api-e-eventos.md) — proposta.
 - [Atribuições e licenças de terceiros](THIRD_PARTY.md).
 
@@ -79,4 +79,4 @@ O índice abaixo continua sendo a navegação canônica. Não criar uma segunda 
 - O documento técnico deve ser atualizado **no mesmo PR** de uma mudança de comportamento, esquema, segurança ou infraestrutura.
 - Documentos usam português brasileiro, caminhos relativos e exemplos fictícios, sem dados privados.
 
-**Bloqueios atuais conhecidos:** persistência DB/arquivos sem recuperação automática ([#3](https://github.com/caiotomaza/cianita/issues/3)); backup/restore consistente ausente ([#4](https://github.com/caiotomaza/cianita/issues/4)); proteção de branches ainda não configurada. Não usar a Cianita alpha como cópia única de notas importantes.
+**Bloqueios atuais conhecidos:** reconciliação experimental ainda sem ensaios completos de crash, migração legada e durabilidade física ([#3](https://github.com/caiotomaza/cianita/issues/3)); backup/restore consistente ausente ([#4](https://github.com/caiotomaza/cianita/issues/4)); proteção de branches ainda não configurada. Não usar a Cianita alpha como cópia única de notas importantes.

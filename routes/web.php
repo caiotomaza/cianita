@@ -26,5 +26,6 @@ Route::middleware('auth')->group(function (): void {
         Route::get('/vaults/{vault}/notes/{note}', [NoteController::class, 'show']);
         Route::put('/vaults/{vault}/notes/{note}', [NoteController::class, 'update']);
         Route::delete('/vaults/{vault}/notes/{note}', [NoteController::class, 'destroy']);
+        Route::post('/vaults/{vault}/notes/{note}/restore', [NoteController::class, 'restore']);
     });
 });

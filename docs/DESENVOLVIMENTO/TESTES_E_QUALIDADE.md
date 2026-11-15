@@ -5,7 +5,7 @@
 - PHPUnit em `tests/Feature` e `tests/Unit`.
 - `VaultAndNoteTest` testa sessão obrigatória, criação de cofre/nota, isolamento entre usuários, leitor sem escrita, editor compartilhado, versão `409`, soft delete e resposta privada `no-store`.
 - CI roda lint PHP, testes SQLite, `vue-tsc`/build Vite e smoke test Docker com PostgreSQL.
-- **Não existe ainda** suíte E2E, testes de carga, testes de recuperação real, integração n8n, fault injection nem análise estática abrangente.
+- A correção experimental introduz NoteConsistencyTest com injeção de exceções, hashes e reconciliador. CI agrega job PostgreSQL 17, sujeito à confirmação por SHA. **Ainda faltam** SIGKILL real, fsync/disco cheio, restauração em host limpo, E2E e análise estática abrangente.
 
 ## Estratégia futura por camadas
 
@@ -51,3 +51,8 @@ O `phpunit.xml` usa SQLite em memória; não substituir por ele a validação de
 ## Evidências e gates
 
 Guardar logs **saneados**, resultados de CI e testes de recovery por commit/tag. Nunca anexar notas, cookies, senhas ou tokens a bugs públicos. Falhas críticas de autorização, integridade e restore bloqueiam promoção à `main` mesmo se build e testes comuns passarem.
+
+
+## Verificação adicional da issue #3
+
+A suíte de integração cobre versões imutáveis, 409, cofre incorreto, 503 quando arquivo/hash falham, interrupção antes/depois de escrita e commit, repetição da reconciliação e arquivamento/restore. Exigir resultado do job PostgreSQL 17 no **commit exato**, além da suíte SQLite e lint/Pint. Teste de exceção em PHP não prova SIGKILL, falha física nem restauração independente. Esses riscos permanecem bloqueadores de homologação.

@@ -2,7 +2,7 @@
 
 ## Implementado
 
-O frontend Vue apresenta seletor de cofres, lista de notas e edição de texto Markdown com `textarea` e botão de salvar. Há alerta de descarte de alterações, indicação de mudanças não salvas e controle de versão na API. **Não** há CodeMirror, preview Markdown, pastas, backlinks, tags funcionais, anexos ou renderizador sanitizado.
+O frontend Vue apresenta seletor de cofres, lista de notas e edição de texto Markdown com `textarea` e botão de salvar. Em resposta de conflito 409/erro 503 o rascunho permanece nos campos da aba, mas **não possui persistência independente** após recarregamento, fechamento ou falha do navegador. Há alerta de descarte de alterações, indicação de mudanças não salvas e controle de versão na API. **Não** há CodeMirror, preview Markdown, pastas, backlinks, tags funcionais, anexos ou renderizador sanitizado.
 
 ## Experiência-alvo (planejada)
 

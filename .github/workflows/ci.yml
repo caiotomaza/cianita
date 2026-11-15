@@ -102,3 +102,43 @@ jobs:
       - name: Encerrar contêineres preservando volumes
         if: always()
         run: docker compose down
+
+  postgres-integrity:
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: cianita_test
+          POSTGRES_USER: cianita_ci
+          POSTGRES_PASSWORD: ci-test-only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U cianita_ci -d cianita_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_DATABASE: cianita_test
+      DB_USERNAME: cianita_ci
+      DB_PASSWORD: ci-test-only
+      DB_URL: ""
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          tools: composer:v2
+          extensions: mbstring, dom, pdo_pgsql, xml, curl, fileinfo
+          coverage: none
+      - name: Instalar dependencias PHP
+        run: composer install --no-interaction --prefer-dist --no-progress
+      - name: Validar padrao PHP para a nova persistencia
+        run: vendor/bin/pint --test
+      - name: Testes de revisoes, falhas e autorizacao em PostgreSQL 17
+        run: |
+          cp .env.example .env
+          php artisan key:generate --force
+          php artisan test --filter='(NoteConsistencyTest|VaultAndNoteTest)'

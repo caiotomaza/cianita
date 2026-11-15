@@ -1,43 +1,24 @@
 # Armazenamento, integridade e concorrência
 
-## Ponto de partida (implementado)
+**Status:** nova persistência experimental em revisão; não homologada para dados importantes.
 
-O conteúdo de cada nota é salvo em Markdown privado no volume Docker `cianita_storage` (diretório interno `/app/storage/app/private/vaults/{id}/notes/{uuid}.md`). O banco mantém título, associação ao cofre, versão e soft delete. Arquivos são acessados pelo disk `local` e não por URL direta.
+## Duas formas de armazenar notas
 
-**Criação atual:** insere metadados em transação DB e escreve o arquivo. Uma falha no commit DB pode deixar arquivo órfão.  
-**Edição atual:** obtém lock da linha, valida `version`, grava temporário, substitui arquivo e atualiza banco. Um crash entre operações pode causar divergência.  
-**Arquivamento atual:** marca a nota como excluída no banco; mantém Markdown.  
-**Leitura atual:** retorna 503 se o arquivo esperado não existe.
+- **Revisão nova:** vaults/{cofre}/notes/{nota}/revisions/{revisao}.md no disk local privado. Cada revisão é um objeto imutável separado, publicado a partir de temporário.
+- **Legado:** vaults/{cofre}/notes/{nota}.md preservado para leitura. Edição bloqueada até backup e migração supervisionada.
 
-Nenhuma dessas operações equivale a transação atômica entre PostgreSQL e filesystem. O `version` protege contra edição concorrente stale **quando o fluxo é executado normalmente**, mas não garante recuperação pós-crash.
+PostgreSQL guarda em **notes** a versão lógica e o identificador da revisão confirmada. **note_revisions** registra o estado preparado/confirmado, versão-base, versão-alvo, título e hash SHA-256. Criar começa com versão 0 e revisão não publicada; a listagem ignora notas nessa situação.
 
-## Requisitos para o desenho final
+## Sequência e reconciliação
 
-1. Gravação de um arquivo por vez sem corromper conteúdo existente; usar temporário no mesmo filesystem e troca atômica quando garantida.
-2. Versionamento imutável ou journal durável que permita descobrir qual corpo pertence a qual versão DB.
-3. Estados de recuperação observáveis e repetíveis; recovery **não pode** sobrescrever a última versão confirmada sem evidência.
-4. Garbage collection separado, conservador, com quarentena e retenção antes de apagar órfãos.
-5. Consistência para renomeações, anexos, caminhos e exportação.
-6. Cenários com `SIGKILL`, queda de disco, rollback de transaction, falta de espaço e restauração parcial testados.
+Após o primeiro commit do journal (prepared), o backend grava um objeto novo, verifica SHA-256 e, numa segunda transação sob lock, publica a referência e marca a revisão committed. Nenhuma escrita posterior modifica a versão anterior. Antes de atualizar, lê e verifica o objeto atual.
 
-## Estratégia candidata (ainda não escolhida)
+Em falha, um objeto pode estar ausente ou existir sem referência atual. Nova escrita sobre nota pendente retorna 409; leitura de revisão ausente/divergente retorna 503. **notes:reconcile** apenas inspeciona; **notes:reconcile --apply** promove operação preparada somente se hash, cofre, versão-base e estado coincidem. Sem limpeza automática ou overwrite.
 
-- Registrar operação com idempotency key, hash, versão esperada e fase (preparada/confirmada).
-- Escrever conteúdo imutável ou temporário verificável; forçar integridade conforme garantias do filesystem.
-- Confirmar no banco a referência da versão e marcar journal como confirmado.
-- Atualizar apontador de leitura somente quando houver estado coerente.
-- Recovery reexecutável por ID, auditável e conservador.
+DELETE exige a versão recebida, arquiva só metadados e incrementa versão; POST de restore usa lock, exige versão válida e autorização do cofre. Não há exclusão física de notas pelo fluxo HTTP.
 
-Comparar custo desse modelo com armazenar corpos temporariamente no PostgreSQL, usar um outbox de arquivos ou snapshots de revisão. **A decisão ainda depende da [ADR 0002](../DECISOES/0002-consistencia-de-notas.md)**; não afirmar que journal já existe.
+## Limites de garantia
 
-## Concorrência futura
+Não há atomicidade entre banco e filesystem, nem garantia comprovada de fsync/queda de energia. Reconciliação nunca inventa bytes perdidos: integridade inválida exige investigação e backup pareado. Revisões legadas ainda não podem ser migradas pela aplicação. Não prometer recuperação de dados sem execução de testes PostgreSQL e crash real.
 
-Edição entre duas abas: cliente envia versão atual; em conflito HTTP 409, preservar rascunho local e permitir comparar/mesclar. Edição colaborativa simultânea real, CRDT e PWA/offline ficam fora do MVP. Lock do banco não serve como protocolo de sincronização entre dispositivos desconectados.
-
-## Portabilidade
-
-O UUID físico é detalhe interno, não caminho lógico de exportação. Para exportar cofre interoperável é necessário mapear hierarquia, títulos e anexos a caminhos Markdown estáveis, tratar nomes duplicados, normalização Unicode, links relativos e nomes inválidos em diferentes sistemas de arquivos. Não executar extração ZIP sem sanitização e limites. Ver [editor/importação](EDITOR_E_INTEROPERABILIDADE.md).
-
-## Testes
-
-Criar cenários repetíveis para crash após escrita, antes do commit, arquivo ausente, hash diferente, versão stale, duas edições simultâneas e leitura sem permissão. A recuperação deve emitir apenas metadados não sensíveis e evidências de integridade. Dependências: [#3](https://github.com/caiotomaza/cianita/issues/3) e [backup](../INFRAESTRUTURA/BACKUP_E_RESTAURACAO.md).
+Veja [ADR 0002](../DECISOES/0002-consistencia-de-notas.md), [modelo de dados](MODELO_DE_DADOS.md) e [runbook](../RUNBOOK.md).

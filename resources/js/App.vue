@@ -170,11 +170,14 @@ async function saveNote(): Promise<void> {
 
 async function archiveNote(): Promise<void> {
     if (!currentNote.value || currentVaultId.value === null || !currentVault.value?.can_edit) return;
+    if (!canDiscard()) return;
     if (!window.confirm('Arquivar esta nota? O arquivo Markdown sera preservado.')) return;
     busy.value = true;
     error.value = '';
     try {
-        await api('/api/vaults/' + currentVaultId.value + '/notes/' + currentNote.value.id, 'DELETE');
+        await api('/api/vaults/' + currentVaultId.value + '/notes/' + currentNote.value.id, 'DELETE', {
+            version: currentNote.value.version,
+        });
         notes.value = notes.value.filter((note) => note.id !== currentNote.value?.id);
         currentNote.value = null;
         draftTitle.value = '';

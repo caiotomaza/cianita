@@ -28,33 +28,16 @@ A interface é servida pela aplicação. O prefixo `/api` atual está em `routes
 | Autorização | Validar acesso de usuários a cofres | `VaultPolicy` e checagem de vínculo da nota |
 | Domínio | Modelos `User`, `Vault`, `Note` | Eloquent, regras ainda concentradas em controllers |
 | Metadados | Usuários, cofres, pivot de membros, notas, versões | Migrations PostgreSQL |
-| Conteúdo | Corpos `.md` | `storage/app/private/vaults/{id}/notes/{uuid}.md` |
+| Conteúdo | Corpos `.md` | Novas revisões privadas imutáveis por UUID; arquivos legados preservados para leitura |
 | Interface | Explorar cofre e notas, editar texto | `resources/js/App.vue` (sem CodeMirror) |
 | Cache/filas | Redis e worker opcional | Serviços Docker; integrações ainda ausentes |
 | Operação | Healthcheck `/up` | CI smoke test; sem health de dependências completo |
 
-## Fluxo de gravação atual
+## Fluxo de gravação experimental
 
-```mermaid
-sequenceDiagram
- participant B as Navegador
- participant L as Laravel
- participant DB as PostgreSQL
- participant FS as Volume Markdown
- B->>L: PUT /api/vaults/{v}/notes/{n} + version
- L->>L: Autoriza cofre, valida nota/vínculo
- L->>DB: Transação e bloqueio da linha
- alt versão desatualizada
-  L-->>B: 409 Conflito
- else versão coincide
-  L->>FS: Preparar arquivo temporário
-  L->>FS: Substituir Markdown
-  L->>DB: Atualizar título e versão
-  L-->>B: 200
- end
-```
+**Primeira transação:** verificar autorização e versão, bloquear nota e persistir registro de revisão preparada com hash. **Filesystem:** escrever temporário privado, publicar novo objeto imutável e verificar hash. **Segunda transação:** confirmar que versão-base e estado coincidem, publicar ponteiro e revisão no mesmo commit. Não substituir bytes de revisões anteriores.
 
-**Limite de confiabilidade:** o filesystem não participa do commit PostgreSQL. Um crash entre a substituição e o commit pode deixar corpo e versão divergentes; tentativa de compensação no código não cobre todas as falhas. A estratégia futura precisa ser validada em [ADR 0002](DECISOES/0002-consistencia-de-notas.md) e [#3](https://github.com/caiotomaza/cianita/issues/3).
+Em caso de crash após a gravação e antes do commit, o journal persiste e pode ser reconciliado por comando explícito. Se faltar arquivo ou houver divergência, falhar e investigar, sem remover objetos. A escrita não possui durabilidade física pós-queda de energia comprovada; a [ADR 0002](DECISOES/0002-consistencia-de-notas.md) e [issue #3](https://github.com/caiotomaza/cianita/issues/3) permanecem com gates pendentes.
 
 ## Limites de domínio propostos
 

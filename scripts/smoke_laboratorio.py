@@ -143,7 +143,7 @@ class Session:
         assert_status(status, expected, f"{method} {path}")
         if status >= 400:
             return None
-        return json.loads(body)["data"] if body else None
+        return json.loads(body).get("data") if body else None
 
 
 def await_http(base):

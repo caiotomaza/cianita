@@ -7,7 +7,8 @@
 - [x] Cofres, modelo de papéis e notas Markdown básicas
 - [x] Versionamento otimista e exclusão lógica
 - [x] Testes iniciais e CI configurada
-- [ ] Validar build Docker e testes em CI e host limpo
+- [x] Validar testes PHP, build frontend e smoke test Docker na CI (GitHub Actions)
+- [ ] Validar implantação e recuperação em host limpo, fora da CI
 - [ ] Gerar/revisar `composer.lock` e `package-lock.json`
 - [ ] Testar e fortalecer gravação atômica e recuperação de divergências
 

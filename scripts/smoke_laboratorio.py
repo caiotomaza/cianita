@@ -28,6 +28,8 @@ class TokenParser(HTMLParser):
         attributes = dict(attrs)
         if tag == "input" and attributes.get("name") == "_token":
             self.token = attributes.get("value", "")
+        if tag == "meta" and attributes.get("name") == "csrf-token":
+            self.token = attributes.get("content", "")
 
 
 def assert_status(actual, expected, label):
@@ -123,12 +125,17 @@ class Session:
                                     {"email": email, "password": password},
                                     csrf=False, form=True)
         assert_status(status, 419, "Login sem CSRF")
-        status, _, url = self.request("POST", "/login",
-                                      {"_token": self.token, "email": email, "password": password},
-                                      form=True)
+        status, html, url = self.request("POST", "/login",
+                                         {"_token": self.token, "email": email, "password": password},
+                                         form=True)
         assert_status(status, 200, "Login autenticado")
         if url not in (self.base + "/", self.base.replace("127.0.0.1", "localhost") + "/"):
             raise RuntimeError("Login não retornou à aplicação local")
+        parser = TokenParser()
+        parser.feed(html)
+        if not parser.token:
+            raise RuntimeError("Página autenticada sem token CSRF")
+        self.token = parser.token
         return self
 
     def api(self, method, path, payload=None, expected=200, csrf=True):

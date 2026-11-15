@@ -14,6 +14,8 @@ main                          versão estável / produção
 
 Toda alteração nasce da `develop`, recebe commits semânticos em português e retorna por PR à `develop`. Releases são PRs de `develop` para `main` depois da aprovação da CI, revisão de segurança, migrações e estratégia de rollback. Um PR aberto para `main` não representa automaticamente uma release autorizada.
 
+Após **merge confirmado**, excluir a branch temporária. Preferir a função nativa do GitHub **Automatically delete head branches** em Settings → General → Pull Requests; aplicar e verificar também a proteção de `main`/`develop` conforme [issue #9](https://github.com/caiotomaza/cianita/issues/9). Branches de release/hotfix exigem reconciliação antes da limpeza.
+
 Formato de commits: `tipo(escopo opcional): descrição no imperativo em português`. Tipos aceitos: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `ci`, `build`, `perf` e `revert`. Mudanças incompatíveis devem marcar `!` e explicar `BREAKING CHANGE:` no corpo.
 
 ## Qualidade mínima

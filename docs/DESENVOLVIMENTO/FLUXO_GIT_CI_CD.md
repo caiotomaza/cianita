@@ -29,6 +29,13 @@ feat(api)!: altera esquema de eventos
 BREAKING CHANGE: clientes devem migrar para o novo contrato.
 ```
 
+## Encerramento de branches após integração
+
+- Confirmar `merged=true`, base `develop`, checks exigidos no SHA correto e integração na branch destino **antes** de remover a referência de trabalho.
+- Preferir a opção nativa **Settings → General → Pull Requests → Automatically delete head branches**, sem um workflow extra com token de escrita. Essa opção ainda depende de configuração administrativa: [#9](https://github.com/caiotomaza/cianita/issues/9).
+- As branches históricas `feat/laravel-docker-foundation` (PR #1) e `docs/centraliza-documentacao-do-projeto` (PR #8) foram integradas, mas a exclusão remota permanece pendente. Usar o botão **Delete branch** de cada PR quando a referência não servir de base a outro PR aberto.
+- Para releases/hotfix, sincronizar a correção em `develop` antes da exclusão. Nunca remover `main` ou `develop`.
+
 ## CI implementada
 
 Workflow: `.github/workflows/ci.yml`. Gatilhos: push em `main` e `develop`, e PR direcionado a essas branches.

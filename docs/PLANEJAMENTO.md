@@ -1,55 +1,105 @@
-# Planejamento de desenvolvimento e governança
+# Plano de desenvolvimento, organização e implantação
 
-## Modelo de execução
+> **Baseline verificada:** `develop` em 15/11/2026 (alpha). Este documento especifica sequência de execução e critérios de aceite; não marca como implementado o que está apenas planejado. Não há previsão de duração sem medições de esforço e ambiente.
 
-Desenvolvimento incremental em monólito modular. Cada mudança começa com uma issue contendo problema, contexto, requisitos vinculados, critérios de aceite observáveis, impactos de segurança/dados, testes e plano de rollback. O PR implementa uma fatia vertical completa (HTTP, regra de negócio, persistência, frontend, teste e documentação) em vez de repartir antecipadamente por equipes/camadas.
+## Objetivo e restrições
 
-**Processo de trabalho:** backlog → refinamento → desenho/ADR quando necessário → branch curta → implementação e testes → PR para `develop` → CI/revisão → integração → homologação → PR de release para `main` → publicação controlada. A esteira **não faz deploy automático em produção hoje**.
+Entregar uma plataforma web **self-hosted** de cofres Markdown para uso pessoal ou pequenos grupos, em NAS/homelab; não desenvolver SaaS, multiempresa ou serviços externos obrigatórios. Priorizar **integridade de dados > segurança > recuperabilidade > confiabilidade > manutenibilidade > usabilidade > desempenho**.
 
-## Priorização
+Preservar o monólito Laravel 13 + Vue 3/TypeScript, PostgreSQL para metadados, Markdown privado para conteúdo, Redis, Docker Compose e FrankenPHP. Conservar **AGPL-3.0-only** e obrigações aplicáveis ao software disponibilizado por rede.
 
-Ordenar por: (1) risco à confidencialidade/integridade e perda de dados; (2) pré-requisito técnico; (3) valor ao fluxo principal; (4) esforço, reversibilidade e manutenção. P0 é impeditivo, mesmo que a interface já funcione. Não pontuar estimativas sem conhecimento da equipe e ambiente.
+## Diagnóstico de partida
 
-| Sequência recomendada | Entrega | Por quê |
+| Área | Estado verificado | Consequência |
 | --- | --- | --- |
-| 1 | Lockfiles e proteção de branch | Reprodutibilidade e governança |
-| 2 | Reconciliação e modelo de persistência | Evitar corrupção silenciosa |
-| 3 | Backup/restore com testes | Recuperação mínima antes de dados reais |
-| 4 | Gestão de membros e testes IDOR | Multiusuário sem escalada de privilégio |
-| 5 | Editor, estrutura de notas e anexos | Fluxo de edição real |
-| 6 | Importação/exportação com roundtrip | Portabilidade e confiança |
-| 7 | Observabilidade, 2FA e integração n8n | Exposição segura e operação |
-| 8 | Pesquisa, grafo, offline e colaboração | Incrementos opcionais |
+| Base Laravel/Vue/Compose | **Implementado (alpha)** por PR [#1](https://github.com/caiotomaza/cianita/pull/1) | É possível desenvolver incrementos sobre `develop` |
+| Documentação central | **Implementada** por PR [#8](https://github.com/caiotomaza/cianita/pull/8) | Preservar pastas e links existentes |
+| Autenticação/cofres/notas | **Implementado (base)**, com testes iniciais | Ampliar testes negativos e fluxos de erro |
+| Controle otimista de versão | **Implementado** (HTTP 409) | Recuperação do rascunho e falha de persistência ainda precisam de teste |
+| Lockfiles PHP/Node | **Bloqueador P0**, [#2](https://github.com/caiotomaza/cianita/issues/2) | Builds não são determinísticos |
+| Consistência banco/Markdown | **Bloqueador P0**, [#3](https://github.com/caiotomaza/cianita/issues/3) | A transação de banco não abrange arquivos |
+| Backup e restauração | **Bloqueador P0**, [#4](https://github.com/caiotomaza/cianita/issues/4) | Não usar como cópia única de notas importantes |
+| Proteção/limpeza de branches | **Pendente de configuração administrativa**, [#9](https://github.com/caiotomaza/cianita/issues/9) | Evitar merges incorretos e branches residuais |
+| Anexos/importação/n8n | **Planejados**, [#5](https://github.com/caiotomaza/cianita/issues/5) e [#7](https://github.com/caiotomaza/cianita/issues/7) | Não expandir superfície antes dos controles centrais |
 
-## Formato de issue
+## Etapa G0 — Governança e fundação de engenharia
 
-`Contexto → problema → objetivo → RF/RNF → fora do escopo → critérios de aceite → riscos/segurança → estratégia de teste → rollback/recuperação → documentação afetada`. Uma issue grande demais deve ser dividida em subtarefas com integração funcional.
+**Objetivo:** estabelecer fluxo rastreável para alterações pequenas e seguras.
 
-## Decisões
+1. Preservar `main` como branch padrão/linha de release e `develop` como integração; branches temporárias saem de `develop`.
+2. Resolver [#9](https://github.com/caiotomaza/cianita/issues/9): proteção real de `main` e `develop`, checks de CI obrigatórios, configuração nativa **Automatically delete head branches** e eliminação de refs antigas já integradas. Uma PR fechada sem merge **não** autoriza exclusão sem revisão.
+3. Revisar `AGENTS.md`, o template de PR, [fluxo Git](DESENVOLVIMENTO/FLUXO_GIT_CI_CD.md) e [definição de pronto](DESENVOLVIMENTO/DEFINICAO_DE_PRONTO.md). O merge para `develop` ocorre somente após checks exigidos e revisão do diff.
+4. Manter `docs/README.md` como índice canônico e [Handbook](HANDBOOK.md)/[Runbook](RUNBOOK.md) como portas de entrada. Preservar diretórios documentais `ARQUITETURA/`, `DECISOES/`, `DESENVOLVIMENTO/`, `INFRAESTRUTURA/` e `SEGURANCA/`; não renomear em massa sem benefício e migração de links testada.
 
-Usar ADR quando houver impacto transversal, alteração de contrato público, perda de dados possível, dependência adicional relevante, troca de estratégia de storage ou de controle de acesso. Uma ADR **proposta** exige discussão; uma ADR **aceita** vincula o desenho, mas não significa entrega pronta. Ver [decisões](DECISOES/0001-monolito-modular.md).
+**Aceite:** duas branches permanentes com regras ativas; novo PR comum tem base `develop`, checks comprovados e limpeza de sua branch; documentação consistente com estado real. **Configuração de GitHub não é efetuada por este plano.**
 
-## Revisão de PR
+## Etapa F1 — Núcleo confiável (P0, ordem crítica)
 
-- Revisar explicitamente autenticação/autorização, acesso a arquivos, concorrência e migrações.
-- Exigir testes negativos de permissões (não membro, leitor, nota de cofre estranho).
-- Não alterar schema sem revisar dados existentes e restore.
-- Ligar issue, requisitos e arquivos de documentação afetados.
-- Integrar apenas após checks obrigatórios aprovados e revisão humana quando disponível.
+| Ordem | Trabalho | Evidência de aceite |
+| --- | --- | --- |
+| F1.1 | [#2 — reprodutibilidade](https://github.com/caiotomaza/cianita/issues/2): gerar, revisar e versionar `composer.lock` e `package-lock.json`; usar `npm ci`; revisar imagens e dependências | Instalação do zero e build CI com versões fixadas, lint, testes, typecheck e smoke test em PostgreSQL |
+| F1.2 | [#3 — integridade](https://github.com/caiotomaza/cianita/issues/3): aceitar/rejeitar [ADR 0002](DECISOES/0002-consistencia-de-notas.md) após prova; journal ou objetos imutáveis + reconciliação conservadora | Fault injection em create/update/archive/crash, sem perda ou substituição silenciosa, sem exclusão de órfãos desconhecidos |
+| F1.3 | [#4 — backup/restore](https://github.com/caiotomaza/cianita/issues/4): ponto lógico coerente de PostgreSQL + Markdown, manifesto e SHA-256, retenção/cópia externa, segredos separados | Restore em host **limpo** com hashes, login, isolamento por cofre e leitura/escrita verificáveis; RPO/RTO definidos e medidos |
+| F1.4 | Endurecer testes/segurança do núcleo: autorização em todas as rotas, 409, CSRF, XSS, paths e versões | Testes negativos e de integração **com PostgreSQL real**, além da suíte rápida; resultados anexados ao PR |
 
-## Ambientes e responsabilidades
+**Dependência:** a solução de backup precisa conhecer o protocolo de consistência do storage. Testes com SQLite não substituem o PostgreSQL para invariantes de transação, locking e crash. Uma CI verde não substitui restauração validada.
 
-| Papel | Responsabilidade |
-| --- | --- |
-| Maintainer | Aceitar decisões, proteger branches, autorizar releases |
-| Desenvolvedor | Código, testes, revisão de risco, docs no mesmo PR |
-| Revisor | Verificar aceites, segurança, rollback e regressões |
-| Operador | Segredos, implantação, cópias externas e exercícios de restore |
+## Etapa F2 — MVP útil de cofres
 
-Uma pessoa pode acumular papéis em projeto pequeno, mas a validação não deve ser confundida com aprovação automática.
+1. **Permissões e contas:** implementar [#6 — membros](https://github.com/caiotomaza/cianita/issues/6), revogação, auditoria de concessões e remoções, impedir escalada e último proprietário sem sucessor. Distinguir administrador da instância do proprietário de cofre.
+2. **Editor confiável:** mover orquestração de persistência de controllers grandes para services/actions conforme a necessidade; melhorar Markdown/preview com sanitização, atalhos, estados de erro e rascunho recuperável após HTTP 409.
+3. **Estrutura lógica:** especificar caminhos, pastas, títulos, `[[links]]`, backlinks, frontmatter e tags preservados. UUID físico não equivale ao caminho do Obsidian.
+4. **Anexos privados:** validar extensões e tipo real, limites, autorização em upload/download, symlinks e caminhos; testar IDOR e arquivos maliciosos.
+5. **Portabilidade:** implementar [#5 — importação/exportação](https://github.com/caiotomaza/cianita/issues/5), ZIP com manifesto versionado, prévia de conflitos e testes de ida e volta. Nunca afirmar compatibilidade de plugins ou sincronização nativa com Obsidian.
+6. **Busca autorizada e restauração de notas arquivadas:** somente após política e esquema suficientes; índices reconstruíveis, sem vazamento entre cofres.
 
-## Cadência e evidências
+**Aceite:** jornadas completas de login, criar cofre, editar, compartilhar, anexar e exportar/reimportar em dados de teste, com isolamento, falhas de rede e concorrência ensaiados. Veja [requisitos](ESCOPO_E_REQUISITOS.md) e [roadmap](ROADMAP.md).
 
-Não prometer datas sem dimensionamento. Para cada marco, produzir: alterações rastreáveis, resultado da CI, changelog/release notes, evidência de restore quando aplicável e registro de riscos remanescentes. O andamento é gerido no [GitHub Issues](https://github.com/caiotomaza/cianita/issues), não por porcentagem estimada.
+## Etapa F3 — Homologação e aplicação no NAS/homelab
 
-Referências: [roadmap](ROADMAP.md), [fluxo Git](DESENVOLVIMENTO/FLUXO_GIT_CI_CD.md) e [DoD](DESENVOLVIMENTO/DEFINICAO_DE_PRONTO.md).
+**A implantação experimental de laboratório não é release.** A sequência abaixo é **planejada**, condicionada a F1 e critérios de segurança, sem execução implícita:
+
+1. Definir máquina, volumes persistentes, capacidade, backup fora do host, redundância elétrica/energia e responsáveis pela recuperação. Não inventar SLA/RPO/RTO.
+2. Separar desenvolvimento, CI, homologação e instância final por dados, credenciais e endpoints. Testar em host limpo com dados sintéticos antes de usar notas pessoais.
+3. Fixar artefatos/imagens por revisão verificável, proteger `.env`/`APP_KEY` e restringir rede. Aplicação via loopback/HTTPS por proxy; acesso remoto preferencialmente VPN autenticada. PostgreSQL, Redis e storage não devem expor serviços.
+4. Executar build, migrations revisadas, verificações PostgreSQL/Redis, smoke tests HTTP e CRUD com autorização. Serviço `healthy` não é prova de funcionalidade.
+5. Ensaiar backup e **restauração independente**, incluindo falha parcial, permissões, hashes e continuidade de chaves; registrar tempos de recuperação medidos.
+6. Promover `develop` a `main` só em PR de release com gates completos, tag no commit correto, changelog e rollback/roll-forward compatível com dados.
+7. Monitorar logs sem conteúdo de notas, integridade, espaço, processos e resultados de backup; registrar falhas e executar exercícios periódicos de restore.
+
+Referências operacionais: [Runbook](RUNBOOK.md), [implantação](INFRAESTRUTURA/IMPLANTACAO_E_AMBIENTES.md), [backup](INFRAESTRUTURA/BACKUP_E_RESTAURACAO.md) e [DoD](DESENVOLVIMENTO/DEFINICAO_DE_PRONTO.md).
+
+## Etapa F4 — Automações e melhorias posteriores
+
+Só depois de autorização robusta, auditoria e recuperação: [#7 — API com escopos por cofre e n8n](https://github.com/caiotomaza/cianita/issues/7), tokens revogáveis, webhooks assinados e idempotência. 2FA, métricas e alarmes entram na operação conforme riscos. Grafos, PWA/offline, colaboração simultânea e IA permanecem **exploratórios**, não pressupostos.
+
+## Organização de pastas — decisão de manutenção
+
+```text
+AGENTS.md / README.md / CONTRIBUTING.md   entradas e regras da raiz
+app/           Laravel (HTTP, Models, Policies; Services/Actions quando necessários)
+bootstrap/ config/ database/ routes/ tests/   convenções nativas Laravel
+resources/js/  Vue 3 e TypeScript
+resources/views/  Blade e integração web
+docker/        configuração FrankenPHP/Caddy
+compose.yaml / Dockerfile   definição de serviços e imagem
+docs/
+  README.md    índice canônico
+  HANDBOOK.md  entrada de engenharia
+  RUNBOOK.md   entrada de operação
+  PLANEJAMENTO.md  plano e dependências
+  ARQUITETURA/ DECISOES/ DESENVOLVIMENTO/ INFRAESTRUTURA/ SEGURANCA/
+.artifacts/    evidências locais fora do Git (não versionar)
+```
+
+**Não reorganizar** diretórios padrão do Laravel apenas para impor um layout genérico `src/`. Mudanças de módulos e caminhos físicos precisam de motivação, teste, atualização dos imports/autoload e ADR quando alterarem contrato ou persistência.
+
+## Governança de tarefa, evidências e critérios de parada
+
+- **Issue:** problema, risco, RF/RNF, escopo, aceite, testes positivos/negativos, recuperação e docs afetadas.
+- **PR:** base `develop`, Conventional Commits em pt-BR, diff revisado, CI no SHA do head, análise de segurança e links para evidências. Atualização documental ocorre no mesmo PR quando houver impacto.
+- **Rastreabilidade local:** identificar execuções relevantes como `YYYY-MM-DD_HH-MM-SS__acao__alvo` e guardar `.log`, `.relatorio.md` e `.evidencias.json` em `.artifacts/` ignorado, sem dados privados. CI guarda artefatos protegidos com retenção.
+- **Parar e investigar:** perda ou divergência de Markdown/DB, acesso cruzado, segredos expostos, migração irreversível sem recuperação, CI obrigatória falha ou restore não confiável.
+- **Entrega concluída:** commit/PR realmente integrados em `develop`, resultado de checks no commit exato, documentação revisada e confirmação da branch final. **Release** e **deploy** são processos separados, sem promoção automática.
+
+Backlog existente: [issues](https://github.com/caiotomaza/cianita/issues); critérios de qualidade: [DoD](DESENVOLVIMENTO/DEFINICAO_DE_PRONTO.md).

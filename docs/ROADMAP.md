@@ -10,7 +10,7 @@
 - [x] Notas Markdown em volume privado, versões otimistas e exclusão lógica.
 - [x] CI PHP, build de frontend e smoke test Docker no GitHub Actions.
 - [x] Documentação arquitetural e guias de contribuição.
-- [ ] Proteção efetiva das branches no GitHub (documentar ≠ configurar).
+- [ ] Proteção efetiva das branches, configuração de exclusão automática e limpeza das refs já integradas ([#9](https://github.com/caiotomaza/cianita/issues/9)); documentar ≠ configurar.
 - [ ] Validar implantação em host limpo fora da CI.
 
 **Saída:** fundação demonstrável, **não release para guardar conteúdo insubstituível**.

@@ -29,11 +29,7 @@ jobs:
       - name: Verificar sintaxe PHP
         run: find app bootstrap config database routes tests -name '*.php' -print0 | xargs -0 -n1 php -l
       - name: Verificar padrão PHP
-        run: |
-          vendor/bin/pint tests/integration/crash_notes_process.php
-          git diff -- tests/integration/crash_notes_process.php
-          git diff --quiet -- tests/integration/crash_notes_process.php
-          vendor/bin/pint --test
+        run: vendor/bin/pint --test
       - name: Executar PHPUnit
         run: |
           cp .env.example .env

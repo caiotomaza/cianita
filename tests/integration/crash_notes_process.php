@@ -11,13 +11,15 @@ use App\Models\NoteRevision;
 use App\Models\User;
 use App\Models\Vault;
 use App\Services\NoteWriteService;
+use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 require dirname(__DIR__, 2).'/vendor/autoload.php';
 
 $app = require dirname(__DIR__, 2).'/bootstrap/app.php';
-$app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+$app->make(Kernel::class)->bootstrap();
 
 $db = (string) config('database.connections.pgsql.database');
 if (
@@ -46,7 +48,7 @@ function fixture(string $suffix): array
     $user = User::factory()->create();
     $vault = Vault::query()->create(['name' => 'SIGKILL '.$suffix, 'owner_id' => $user->getKey()]);
 
-    return [$vault, new NoteWriteService()];
+    return [$vault, new NoteWriteService];
 }
 
 function killedAt(string $point, Closure $operation): void
@@ -131,7 +133,7 @@ function testUpdateCut(string $point): void
         try {
             $writer->finalize($pending);
             throw new RuntimeException('Reconciliação confirmou objeto ausente.');
-        } catch (Symfony\Component\HttpKernel\Exception\HttpException $error) {
+        } catch (HttpException $error) {
             requireState($error->getStatusCode() === 503, 'falha explicita por objeto ausente');
         }
         requireState(Note::findOrFail($id)->version === 1, 'arquivo ausente nao promove');

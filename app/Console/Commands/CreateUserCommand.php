@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Validator;
 class CreateUserCommand extends Command
 {
     protected $signature = 'cianita:user:create {email}';
+
     protected $description = 'Cria uma conta local sem expor a senha no historico do shell';
 
     public function handle(): int

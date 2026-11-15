@@ -38,7 +38,7 @@ services:
     profiles: ["workers"]
 
   db:
-    image: postgres:17-alpine
+    image: postgres:17-alpine@sha256:a77aa70e641402a21411b92b721c58d10f23b50ae5fdd2333efd22d166e1e5f7
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${DB_DATABASE:-cianita}
@@ -53,7 +53,7 @@ services:
       retries: 10
 
   redis:
-    image: redis:7-alpine
+    image: redis:7-alpine@sha256:7f7d30b7fdd09467bac58198a1f166dd69789d348d4fe859cccb20e0cf287fbe
     restart: unless-stopped
     command: ["redis-server", "--save", "60", "1", "--appendonly", "yes"]
     volumes:

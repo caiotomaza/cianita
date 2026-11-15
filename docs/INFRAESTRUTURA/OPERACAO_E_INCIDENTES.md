@@ -40,4 +40,6 @@ Na alpha, atualizações apenas com dados de teste. Para produção: imagem imut
 
 `docker compose down` preserva volumes por padrão, mas interrompe serviços. **Nunca executar** `docker compose down -v` ou `docker volume prune` na manutenção rotineira — pode destruir os dados.
 
+Para upgrades de pacotes e imagens, seguir [atualização de dependências](ATUALIZACAO_DE_DEPENDENCIAS.md) em branch curta, com auditoria e rollback de código controlado.
+
 Ver [backup](BACKUP_E_RESTAURACAO.md) e [topologia](TOPOLOGIA_DOCKER.md).

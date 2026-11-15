@@ -32,7 +32,7 @@ O `/up` indica resposta HTTP; não comprova integridade PostgreSQL, Redis, espa�
 
 ## Build e rede
 
-O Dockerfile compila assets Vite no stage Node, instala dependências PHP via Composer no stage PHP e empacota runtime FrankenPHP/Caddy. Lockfiles ausentes tornam os builds **não determinísticos** ([#2](https://github.com/caiotomaza/cianita/issues/2)). Fixar versões/digests e configurar restrições adicionais de runtime após testes. DB e Redis não devem ser expostos à internet, mesmo que já exista autenticação da interface.
+O Dockerfile compila assets Vite no stage Node, instala dependências PHP via Composer no stage PHP e empacota runtime FrankenPHP/Caddy. Os lockfiles Composer/npm são copiados no contexto e utilizados durante o build. As imagens base Node 22, FrankenPHP/PHP 8.4, Composer 2, PostgreSQL 17 e Redis 7 estão pinadas por digest nos respectivos Dockerfile/Compose, obtidos por inspeção do registry durante a CI da PR #11. Revisar e atualizar digests somente de forma deliberada: [atualização de dependências](ATUALIZACAO_DE_DEPENDENCIAS.md). Restrições adicionais de runtime ainda exigem testes. DB e Redis não devem ser expostos à internet, mesmo que já exista autenticação da interface.
 
 ## Acesso remoto — proposta
 

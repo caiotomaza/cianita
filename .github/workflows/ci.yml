@@ -11,53 +11,78 @@ permissions:
 
 jobs:
   php:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
+          tools: composer:v2
           extensions: mbstring, dom, pdo_sqlite, sqlite3, xml, curl, fileinfo
           coverage: none
-      - name: Instalar dependencias PHP
+      - name: Validar manifesto e lockfile Composer
+        run: composer validate --strict --no-check-publish
+      - name: Instalar dependências PHP travadas
         run: composer install --no-interaction --prefer-dist --no-progress
+      - name: Auditar dependências PHP
+        run: composer audit --locked
       - name: Verificar sintaxe PHP
-        run: find app bootstrap database routes -name '*.php' -print0 | xargs -0 -n1 php -l
-      - name: Executar testes
+        run: find app bootstrap config database routes tests -name '*.php' -print0 | xargs -0 -n1 php -l
+      - name: Verificar padrão PHP
+        run: vendor/bin/pint --test
+      - name: Executar PHPUnit
         run: |
           cp .env.example .env
           php artisan key:generate --force
           php artisan test
 
   frontend:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Instalar dependencias JS
-        run: npm install --no-audit --no-fund
-      - name: Typecheck e build
+          cache: npm
+      - name: Instalar dependências JS travadas
+        run: npm ci --no-audit --no-fund
+      - name: Auditar dependências JS
+        run: npm audit --audit-level=high
+      - name: Verificar tipos
+        run: npm run typecheck
+      - name: Build de frontend
         run: npm run build
 
   docker:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      - name: Preparar variaveis efemeras
+      - name: Identificar digests das imagens de base
+        shell: bash
+        run: |
+          for image in \
+            node:22-bookworm-slim@sha256:e9f565d32859f0cbfb52125eafe8be39390f24dac302dc3cdf566e8ba3ab21ee \
+            dunglas/frankenphp:1-php8.4-bookworm@sha256:bd101be4e0f384dba7da85bfc8d13911998b4fee4ed42ec7959dc0e67619c161 \
+            composer:2@sha256:ca11f643d7791ebdd90a34fc20caf11380d434007ae539a9ea75cd9212e13dca \
+            postgres:17-alpine@sha256:a77aa70e641402a21411b92b721c58d10f23b50ae5fdd2333efd22d166e1e5f7 \
+            redis:7-alpine@sha256:7f7d30b7fdd09467bac58198a1f166dd69789d348d4fe859cccb20e0cf287fbe; do
+            echo "Imagem $image"
+            docker buildx imagetools inspect "$image" | sed -n '1,7p'
+          done
+      - name: Preparar variáveis efêmeras
         run: |
           cp .env.example .env
           sed -i 's/^DB_PASSWORD=$/DB_PASSWORD=ci-only-local-password/' .env
           key="$(openssl rand -base64 32)"
           sed -i "s|^APP_KEY=.*|APP_KEY=base64:$key|" .env
           docker compose config --quiet
-      - name: Build de container
+      - name: Build de contêiner a partir dos lockfiles
         run: docker compose build app
-      - name: Migracoes e smoke test HTTP
+      - name: Migrations em PostgreSQL e smoke HTTP
         run: |
           docker compose up -d db redis
           docker compose run --rm app php artisan migrate --force
+          docker compose run --rm app php artisan migrate:status
           docker compose up -d app
           ok=0
           for attempt in $(seq 1 40); do
@@ -69,11 +94,11 @@ jobs:
           done
           test "$ok" -eq 1
           curl --fail --silent --show-error --output /dev/null http://127.0.0.1:8080/login
-      - name: Logs em caso de falha
+      - name: Logs saneados em caso de falha
         if: failure()
         run: |
           docker compose ps
-          docker compose logs --tail=100
-      - name: Encerrar containers sem remover volumes
+          docker compose logs --tail=50 app db redis
+      - name: Encerrar contêineres preservando volumes
         if: always()
         run: docker compose down

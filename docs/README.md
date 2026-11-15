@@ -46,6 +46,7 @@ O índice abaixo continua sendo a navegação canônica. Não criar uma segunda 
 ### Infraestrutura e operações
 
 - [Topologia Docker e rede](INFRAESTRUTURA/TOPOLOGIA_DOCKER.md).
+- [Atualização deliberada de dependências](INFRAESTRUTURA/ATUALIZACAO_DE_DEPENDENCIAS.md).
 - [Configuração e segredos](INFRAESTRUTURA/CONFIGURACAO_E_SEGREDOS.md).
 - [Implantação e ambientes](INFRAESTRUTURA/IMPLANTACAO_E_AMBIENTES.md).
 - [Backup, exportação e restauração](INFRAESTRUTURA/BACKUP_E_RESTAURACAO.md).

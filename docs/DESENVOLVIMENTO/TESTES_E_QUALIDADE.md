@@ -35,13 +35,18 @@
 ## Execução local existente
 
 ```bash
-composer install
-npm install
+composer validate --strict --no-check-publish
+composer install --no-interaction --prefer-dist
+composer audit --locked
+vendor/bin/pint --test
+npm ci
+npm audit --audit-level=high
+npm run typecheck
 npm run build
 php artisan test
 ```
 
-O `phpunit.xml` usa SQLite em memória; para ambiente local ajustar `.env`. Sem lockfiles, os comandos ainda não garantem builds idênticos. Ver [laboratório Docker](../INFRAESTRUTURA/IMPLANTACAO_E_AMBIENTES.md) para testes em contêiner.
+O `phpunit.xml` usa SQLite em memória; não substituir por ele a validação de migrations e HTTP contra PostgreSQL real no Compose. O `composer.lock` e o `package-lock.json` devem permanecer versionados. Em uma instalação limpa, usar `composer install` e `npm ci` (nunca resolver versões silenciosamente). Ver [atualização de dependências](../INFRAESTRUTURA/ATUALIZACAO_DE_DEPENDENCIAS.md). Ver [laboratório Docker](../INFRAESTRUTURA/IMPLANTACAO_E_AMBIENTES.md) para testes em contêiner.
 
 ## Evidências e gates
 

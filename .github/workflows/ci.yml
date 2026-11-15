@@ -48,7 +48,9 @@ jobs:
       - name: Preparar variaveis efemeras
         run: |
           cp .env.example .env
-          sed -i 's/^DB_PASSWORD=$/DB_PASSWORD=ci-only-local-password/' .env
+          db_password="$(openssl rand -hex 24)"
+          sed -i "s/^DB_PASSWORD=$/DB_PASSWORD=$db_password/" .env
+          chmod 600 .env
           key="$(openssl rand -base64 32)"
           sed -i "s|^APP_KEY=.*|APP_KEY=base64:$key|" .env
           docker compose config --quiet
@@ -69,6 +71,10 @@ jobs:
           done
           test "$ok" -eq 1
           curl --fail --silent --show-error --output /dev/null http://127.0.0.1:8080/login
+      - name: Smoke HTTP autenticado com dados sintéticos
+        env:
+          CIANITA_SMOKE_LAB: '1'
+        run: python3 scripts/smoke_laboratorio.py
       - name: Logs em caso de falha
         if: failure()
         run: |

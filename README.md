@@ -60,6 +60,18 @@ docker compose --profile workers up -d
 
 O último comando ativa o worker opcional. `docker compose down` preserva volumes por padrão; **`docker compose down -v` remove os volumes e pode destruir os dados**. Não use isso para atualização ou troubleshooting de rotina.
 
+### Smoke test de laboratório (CI e host descartável)
+
+O workflow `.github/workflows/ci.yml` foi configurado para executar `scripts/smoke_laboratorio.py` **após** o build e as migrations PostgreSQL. O teste cria duas contas artificiais pelo comando `cianita:user:create` em pseudoterminal, realiza login real com CSRF, testa CRUD, acesso negado entre usuários, HTTP 409, leitura após reinício de app/DB/Redis e ausência de portas publicadas para banco/Redis. **Passagem do teste depende do resultado da CI do SHA correspondente.** Não é teste de backup/restore nem de navegador E2E.
+
+Somente em **instância descartável, nova, com volumes de laboratório e sem dados importantes**, já inicializada:
+
+```bash
+CIANITA_SMOKE_LAB=1 python3 scripts/smoke_laboratorio.py
+```
+
+Esse comando **cria contas e notas fictícias e reinicia serviços**. Não executá-lo no NAS/instância de uso real. Para verificações apenas de leitura, consultar o [Runbook](docs/RUNBOOK.md).
+
 ## Estrutura
 
 ```text

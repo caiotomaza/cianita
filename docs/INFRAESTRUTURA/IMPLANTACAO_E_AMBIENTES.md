@@ -39,6 +39,29 @@ docker compose ps
 
 Validar `http://localhost:8080/login` (ou a porta escolhida) e fazer CRUD em cofre de **testes**. A sequência segue README/CI, mas **não foi certificada em instalações de usuário**. Não usar `docker compose down -v`.
 
+### Conferência de laboratório
+
+Com os contêineres iniciados e usando apenas dados artificiais, verificar a rede e a prontidão sem expor segredos:
+
+```bash
+docker compose ps
+docker compose exec -T db sh -c 'pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+docker compose exec -T redis redis-cli ping
+curl --fail --silent --show-error http://127.0.0.1:8080/up
+curl --fail --silent --show-error --output /dev/null http://127.0.0.1:8080/login
+# Os comandos seguintes NÃO devem retornar porta publicada:
+docker compose port db 5432
+docker compose port redis 6379
+```
+
+Se `CIANITA_PORT` for diferente de 8080, adequar as URLs HTTP. A CI adiciona um smoke automatizado de autenticação real, CRUD e negações com contas artificiais. **Somente em ambiente novo, descartável e sem notas valiosas**, após os passos anteriores, executá-lo com:
+
+```bash
+CIANITA_SMOKE_LAB=1 python3 scripts/smoke_laboratorio.py
+```
+
+O script interage com a CLI de criação de contas, reinicia `db`, `redis` e `app` e confirma leitura posterior de nota sintética. Isso não substitui testes de restore, estabilidade após crash, E2E de navegador ou validação no NAS. Não usar em volume de dados reais.
+
 ### Worker opcional
 
 ```bash

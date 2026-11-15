@@ -32,8 +32,8 @@ BREAKING CHANGE: clientes devem migrar para o novo contrato.
 ## Encerramento de branches após integração
 
 - Confirmar `merged=true`, base `develop`, checks exigidos no SHA correto e integração na branch destino **antes** de remover a referência de trabalho.
-- Preferir a opção nativa **Settings → General → Pull Requests → Automatically delete head branches**, sem um workflow extra com token de escrita. Essa opção ainda depende de configuração administrativa: [#9](https://github.com/caiotomaza/cianita/issues/9).
-- As branches históricas `feat/laravel-docker-foundation` (PR #1) e `docs/centraliza-documentacao-do-projeto` (PR #8) foram integradas, mas a exclusão remota permanece pendente. Usar o botão **Delete branch** de cada PR quando a referência não servir de base a outro PR aberto.
+- Preferir a opção nativa **Settings → General → Pull Requests → Automatically delete head branches**, sem um workflow extra com token de escrita. Na consulta de 15/11/2026, `delete_branch_on_merge=false` e a ativação administrativa seguia pendente: [#9](https://github.com/caiotomaza/cianita/issues/9).
+- **Verificado em 15/11/2026:** PRs #1, #8 e #10 estão com `merged=true`, base `develop`, e as refs remotas de origem já não aparecem na listagem de branches. Não tentar excluí-las novamente. A configuração automática permanece pendente.
 - Para releases/hotfix, sincronizar a correção em `develop` antes da exclusão. Nunca remover `main` ou `develop`.
 
 ## CI implementada
@@ -44,7 +44,7 @@ Workflow: `.github/workflows/ci.yml`. Gatilhos: push em `main` e `develop`, e PR
 | --- | --- |
 | `php` | PHP 8.4, Composer, lint e PHPUnit em SQLite em memória |
 | `frontend` | Node 22, TypeScript (`vue-tsc`) e build Vite |
-| `docker` | Config Compose, build, PostgreSQL/Redis, migrations e HTTP `/up` + `/login` |
+| `docker` | Config Compose, build, PostgreSQL/Redis, migrations, HTTP `/up` + `/login` e smoke autenticado com CLI/CRUD/CSRF/negações/409/restart (script `scripts/smoke_laboratorio.py`; confirmar status no SHA) |
 
 Limitações: sem lockfiles, sem pipeline de publish/deploy, sem testes de backup, restore, segurança aprofundada, E2E ou host de homologação. Não declarar CD existente. A CI executou smoke tests com dados efêmeros; isso não cobre operação real.
 

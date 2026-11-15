@@ -4,7 +4,7 @@
 
 - PHPUnit em `tests/Feature` e `tests/Unit`.
 - `VaultAndNoteTest` testa sessão obrigatória, criação de cofre/nota, isolamento entre usuários, leitor sem escrita, editor compartilhado, versão `409`, soft delete e resposta privada `no-store`.
-- CI roda lint PHP, testes SQLite, `vue-tsc`/build Vite e smoke test Docker com PostgreSQL.
+- CI roda lint PHP, testes SQLite, `vue-tsc`/build Vite e smoke test Docker com PostgreSQL. O job Docker foi ampliado para executar `scripts/smoke_laboratorio.py` com contas artificiais, login real/CSRF, CRUD, isolamento, HTTP 409, checagem de portas e persistência após restart. Verificar o resultado do workflow no SHA exato antes de classificar como aprovado.
 - **Não existe ainda** suíte E2E, testes de carga, testes de recuperação real, integração n8n, fault injection nem análise estática abrangente.
 
 ## Estratégia futura por camadas

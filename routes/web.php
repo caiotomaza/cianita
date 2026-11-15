@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\NoteController;
 use App\Http\Controllers\VaultController;
+use App\Http\Middleware\PreventPrivateResponseCaching;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function (): void {
@@ -17,7 +18,7 @@ Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])
 Route::middleware('auth')->group(function (): void {
     Route::view('/', 'app')->name('app');
 
-    Route::prefix('api')->group(function (): void {
+    Route::prefix('api')->middleware(PreventPrivateResponseCaching::class)->group(function (): void {
         Route::get('/vaults', [VaultController::class, 'index']);
         Route::post('/vaults', [VaultController::class, 'store']);
         Route::get('/vaults/{vault}/notes', [NoteController::class, 'index']);

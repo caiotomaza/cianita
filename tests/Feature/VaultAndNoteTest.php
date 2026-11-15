@@ -46,6 +46,23 @@ class VaultAndNoteTest extends TestCase
             ->assertOk()->assertJsonPath('data.body', '# Meu conhecimento');
     }
 
+    public function test_private_note_api_is_not_cached_by_http_intermediaries(): void
+    {
+        $owner = User::factory()->create();
+        $vault = Vault::query()->create(['name' => 'Privado', 'owner_id' => $owner->id]);
+
+        $this->actingAs($owner);
+        $noteId = $this->postJson('/api/vaults/'.$vault->id.'/notes', [
+            'title' => 'Segredo', 'body' => 'Conteudo privado',
+        ])->assertCreated()->json('data.id');
+
+        $response = $this->getJson('/api/vaults/'.$vault->id.'/notes/'.$noteId)
+            ->assertOk()->assertJsonPath('data.body', 'Conteudo privado');
+
+        $this->assertTrue($response->headers->hasCacheControlDirective('no-store'));
+        $this->assertTrue($response->headers->hasCacheControlDirective('private'));
+    }
+
     public function test_other_users_cannot_read_or_modify_private_vaults(): void
     {
         $owner = User::factory()->create();

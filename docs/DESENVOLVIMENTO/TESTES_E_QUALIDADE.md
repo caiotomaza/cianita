@@ -4,8 +4,8 @@
 
 - PHPUnit em `tests/Feature` e `tests/Unit`.
 - `VaultAndNoteTest` testa sessão obrigatória, criação de cofre/nota, isolamento entre usuários, leitor sem escrita, editor compartilhado, versão `409`, soft delete e resposta privada `no-store`.
-- CI roda lint PHP, testes SQLite, `vue-tsc`/build Vite e smoke test Docker com PostgreSQL.
-- A correção experimental introduz NoteConsistencyTest com injeção de exceções, hashes e reconciliador. CI agrega job PostgreSQL 17, sujeito à confirmação por SHA. **Ainda faltam** SIGKILL real, fsync/disco cheio, restauração em host limpo, E2E e análise estática abrangente.
+- CI roda lint PHP, testes SQLite, `vue-tsc`/build Vite e smoke test Docker com PostgreSQL. O job Docker também executa `scripts/smoke_laboratorio.py` com contas artificiais, login real/CSRF, CRUD, isolamento, HTTP 409, checagem de bindings e persistência após restart; confirmar o resultado no SHA exato.
+- A correção experimental acrescenta NoteConsistencyTest com falhas injetadas, hashes e reconciliador, mais um job PostgreSQL 17 na CI, sujeito a verificação no SHA. **Ainda não há** SIGKILL real, fsync/disco cheio, restauração em host limpo, suíte E2E de navegador ou análise estática abrangente.
 
 ## Estratégia futura por camadas
 
@@ -51,7 +51,6 @@ O `phpunit.xml` usa SQLite em memória; não substituir por ele a validação de
 ## Evidências e gates
 
 Guardar logs **saneados**, resultados de CI e testes de recovery por commit/tag. Nunca anexar notas, cookies, senhas ou tokens a bugs públicos. Falhas críticas de autorização, integridade e restore bloqueiam promoção à `main` mesmo se build e testes comuns passarem.
-
 
 ## Verificação adicional da issue #3
 

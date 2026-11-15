@@ -2,7 +2,7 @@
 
 **Cianita** é uma aplicação web self-hosted para organizar conhecimento em cofres Markdown, inspirada na experiência de edição do Obsidian. O projeto utiliza **Laravel 13, PHP 8.4, Vue 3, TypeScript, PostgreSQL, Redis e Docker Compose**.
 
-> **Estado: base inicial (alpha).** Ainda não é uma alternativa completa ao Obsidian nem está pronta para guardar dados insubstituíveis. Não há rotina automática de backup/restauração nem lockfiles versionados.
+> **Estado: base inicial (alpha).** Ainda não é uma alternativa completa ao Obsidian nem está pronta para guardar dados insubstituíveis. Não há rotina automática de backup/restauração; os lockfiles PHP/Node já estão versionados, mas persistência e recuperação ainda exigem homologação.
 
 **Documentação do projeto:** [índice canônico](docs/README.md), [Handbook de engenharia](docs/HANDBOOK.md), [Runbook operacional](docs/RUNBOOK.md) e [plano de desenvolvimento/implantação](docs/PLANEJAMENTO.md). O estágio atual é alpha; as etapas propostas não representam funcionalidades implementadas.
 
@@ -60,6 +60,18 @@ docker compose --profile workers up -d
 
 O último comando ativa o worker opcional. `docker compose down` preserva volumes por padrão; **`docker compose down -v` remove os volumes e pode destruir os dados**. Não use isso para atualização ou troubleshooting de rotina.
 
+### Smoke test de laboratório (CI e host descartável)
+
+O workflow `.github/workflows/ci.yml` foi configurado para executar `scripts/smoke_laboratorio.py` **após** o build e as migrations PostgreSQL. O teste cria duas contas artificiais pelo comando `cianita:user:create` em pseudoterminal, realiza login real com CSRF, testa CRUD, acesso negado entre usuários, HTTP 409, leitura após reinício de app/DB/Redis e ausência de bindings de portas do banco/Redis no host. **Passagem do teste depende do resultado da CI do SHA correspondente.** Não é teste de backup/restore nem de navegador E2E.
+
+Somente em **instância descartável, nova, com volumes de laboratório e sem dados importantes**, já inicializada:
+
+```bash
+CIANITA_SMOKE_LAB=1 python3 scripts/smoke_laboratorio.py
+```
+
+Esse comando **cria contas e notas fictícias e reinicia serviços**. Não executá-lo no NAS/instância de uso real. Para verificações apenas de leitura, consultar o [Runbook](docs/RUNBOOK.md).
+
 ## Estrutura
 
 ```text
@@ -84,12 +96,13 @@ O repositório inclui testes PHPUnit e CI para PHP 8.4 e Node 22. Um desenvolved
 
 ```shell
 composer install
-npm install
+npm ci
+npm run typecheck
 npm run build
 php artisan test
 ```
 
-Para testes PHP, configure `.env` e banco SQLite conforme `phpunit.xml`. O projeto ainda não inclui `composer.lock` ou `package-lock.json`, portanto **não há garantia de builds reproduzíveis**. A geração, revisão e inclusão dos lockfiles são necessárias antes de classificar uma versão como estável.
+Para testes PHP, configure `.env` e banco SQLite conforme `phpunit.xml`. `composer.lock` e `package-lock.json` são versionados desde a PR #11; utilize `composer install` e `npm ci`. O pinning das imagens de base não elimina todas as fontes de variação de build. Permanecem os bloqueadores de integridade e recuperação (#3 e #4).
 
 ## Segurança e dados
 

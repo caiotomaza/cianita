@@ -16,6 +16,8 @@ class NoteConsistencyTest extends TestCase
 {
     use RefreshDatabase;
 
+    private ?string $faultPoint = null;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -43,9 +45,13 @@ class NoteConsistencyTest extends TestCase
 
     private function inject(string $at): void
     {
+        // O controller pode manter a instância do serviço entre requisições
+        // no mesmo teste; o checkpoint deve ler o estado atual, não o valor
+        // capturado na primeira injeção.
+        $this->faultPoint = $at;
         $this->app->instance(NoteWriteService::class, new NoteWriteService(
-            static function (string $point) use ($at): void {
-                if ($point === $at) {
+            function (string $point): void {
+                if ($point === $this->faultPoint) {
                     throw new RuntimeException('Falha simulada sem dados de nota.');
                 }
             },
@@ -54,6 +60,7 @@ class NoteConsistencyTest extends TestCase
 
     private function clearInjection(): void
     {
+        $this->faultPoint = null;
         $this->app->forgetInstance(NoteWriteService::class);
     }
 

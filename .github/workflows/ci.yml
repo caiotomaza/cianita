@@ -38,3 +38,40 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Typecheck e build
         run: npm run build
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Preparar variaveis efemeras
+        run: |
+          cp .env.example .env
+          sed -i 's/^DB_PASSWORD=$/DB_PASSWORD=ci-only-local-password/' .env
+          key="$(openssl rand -base64 32)"
+          sed -i "s|^APP_KEY=.*|APP_KEY=base64:$key|" .env
+          docker compose config --quiet
+      - name: Build de container
+        run: docker compose build app
+      - name: Migracoes e smoke test HTTP
+        run: |
+          docker compose up -d db redis
+          docker compose run --rm app php artisan migrate --force
+          docker compose up -d app
+          ok=0
+          for attempt in $(seq 1 40); do
+            if curl --fail --silent --show-error http://127.0.0.1:8080/up >/dev/null 2>&1; then
+              ok=1
+              break
+            fi
+            sleep 2
+          done
+          test "$ok" -eq 1
+          curl --fail --silent --show-error --output /dev/null http://127.0.0.1:8080/login
+      - name: Logs em caso de falha
+        if: failure()
+        run: |
+          docker compose ps
+          docker compose logs --tail=100
+      - name: Encerrar containers sem remover volumes
+        if: always()
+        run: docker compose down

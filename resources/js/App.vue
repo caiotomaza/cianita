@@ -108,6 +108,9 @@ async function createVault(): Promise<void> {
         const result = await api<Envelope<Vault>>('/api/vaults', 'POST', { name });
         vaults.value.push({ ...result.data, can_edit: true });
         vaults.value.sort((a, b) => a.name.localeCompare(b.name));
+        currentNote.value = null;
+        draftTitle.value = '';
+        draftBody.value = '';
         await selectVault(result.data.id);
         message.value = 'Cofre criado';
     } catch (reason) {

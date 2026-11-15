@@ -27,6 +27,27 @@ docker compose logs --tail=100 app
 
 Para uma instância nova, seguir **exatamente** o [procedimento de laboratório](INFRAESTRUTURA/IMPLANTACAO_E_AMBIENTES.md), incluindo criação controlada de chave e migrações. Depois testar `/up`, `/login`, autenticação e operações em cofre fictício. Não considerar o endpoint `/up` um teste completo do PostgreSQL e do storage.
 
+## Verificações não destrutivas e smoke de laboratório
+
+Após inicialização, em um terminal no host com Compose e variáveis de ambiente configuradas:
+
+```bash
+docker compose ps
+docker compose exec -T db sh -c 'pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+docker compose exec -T redis redis-cli ping
+curl --fail --silent --show-error http://127.0.0.1:8080/up
+curl --fail --silent --show-error --output /dev/null http://127.0.0.1:8080/login
+```
+
+Ajustar a porta dos comandos HTTP se `CIANITA_PORT` for diferente. Banco e Redis **não devem** ter bindings de portas no host. Inspecionar os bindings reais (valor `null` para a porta interna indica ausência de publicação):
+
+```bash
+docker inspect --format '{{json .NetworkSettings.Ports}}' "$(docker compose ps -q db)"
+docker inspect --format '{{json .NetworkSettings.Ports}}' "$(docker compose ps -q redis)"
+```
+
+O script `scripts/smoke_laboratorio.py` foi ligado ao job Docker da CI: usa usuários/notas fictícios, verifica CSRF, isolamento, CRUD, versão 409 e persistência após restart de serviços. Só é apropriado para **volumes novos e descartáveis**: `CIANITA_SMOKE_LAB=1 python3 scripts/smoke_laboratorio.py`. Não executar em instância com dados importantes, porque o script altera dados e reinicia serviços. A execução da CI é evidência limitada àquele runner e SHA; um host real/NAS continua **não testado**.
+
 ## Interrupção segura e coleta de evidências
 
 Em caso de erro de escrita, divergência entre banco e Markdown, falta de volume ou suspeita de violação de permissão:

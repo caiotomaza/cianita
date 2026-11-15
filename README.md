@@ -4,6 +4,8 @@
 
 > **Estado: base inicial (alpha).** Ainda não é uma alternativa completa ao Obsidian nem está pronta para guardar dados insubstituíveis. Não há rotina automática de backup/restauração nem lockfiles versionados.
 
+**Documentação do projeto:** [índice completo em `docs/README.md`](docs/README.md) — conceito, requisitos, arquitetura, infraestrutura, segurança, planejamento e processo de desenvolvimento.
+
 ## O que funciona nesta base
 
 - Login por sessão Laravel (CSRF, regeneração de sessão e limite de tentativas).

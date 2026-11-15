@@ -4,7 +4,7 @@
 
 > **Estado: base inicial (alpha).** Ainda não é uma alternativa completa ao Obsidian nem está pronta para guardar dados insubstituíveis. Não há rotina automática de backup/restauração nem lockfiles versionados.
 
-**Documentação do projeto:** [índice completo em `docs/README.md`](docs/README.md) — conceito, requisitos, arquitetura, infraestrutura, segurança, planejamento e processo de desenvolvimento.
+**Documentação do projeto:** [índice canônico](docs/README.md), [Handbook de engenharia](docs/HANDBOOK.md), [Runbook operacional](docs/RUNBOOK.md) e [plano de desenvolvimento/implantação](docs/PLANEJAMENTO.md). O estágio atual é alpha; as etapas propostas não representam funcionalidades implementadas.
 
 ## O que funciona nesta base
 

@@ -14,6 +14,14 @@
 
 A branch `main` permanece reservada à produção, mas **não representa uma versão publicada e aprovada** neste estágio. O desenvolvimento ocorre na `develop` e em branches curtas com pull requests.
 
+## Pontos de entrada
+
+- [Handbook de engenharia](HANDBOOK.md) — mapa técnico do código, normas, decisões e processo de contribuição.
+- [Runbook operacional](RUNBOOK.md) — pré-verificações, operação de laboratório, incidentes e critérios de recuperação.
+- [Plano de desenvolvimento e implantação](PLANEJAMENTO.md) — execução por dependências, aceite e aplicação futura em NAS/homelab.
+
+O índice abaixo continua sendo a navegação canônica. Não criar uma segunda árvore de documentação nem mover diretórios Laravel por estética.
+
 ## Navegação por área
 
 ### Produto e planejamento

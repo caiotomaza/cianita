@@ -9,6 +9,7 @@ Estas regras orientam contribuições humanas e agentes de desenvolvimento.
 - `feat/<resumo>`, `fix/<resumo>`, `refactor/<resumo>`, `docs/<resumo>`, `chore/<resumo>`, `test/<resumo>` e `ci/<resumo>`: branches curtas criadas de `develop`.
 - Abrir pull request para `develop` com testes e revisão. Promover `develop` para `main` somente por PR de release, após critérios de qualidade e operações de rollback definidas.
 - Não reescrever histórico compartilhado, não forçar push e não mesclar código com CI falhando.
+- **Após merge confirmado em `develop`:** verificar integração e checks no SHA correto, então excluir a branch curta local/remota. Preferir a opção nativa do GitHub **Automatically delete head branches**; sua configuração e a limpeza das branches antigas estão pendentes na [issue #9](https://github.com/caiotomaza/cianita/issues/9). Não excluir a branch em caso de PR apenas fechada ou merge pendente.
 - Commits no padrão Conventional Commits, **descrições em português**: `feat: adiciona criação de cofres`, `fix: valida acesso por cofre`.
 
 ## Arquitetura e regras

@@ -1,8 +1,8 @@
 # Modelo de dados e evolução do domínio
 
-**Status:** descrição do esquema atual + propostas futuras claramente separadas. Fonte verificável: `database/migrations/2026_11_15_000001_create_vaults_and_notes_tables.php` e migrations padrão de usuários, jobs e cache.
+**Status:** esquema anterior mantido como referência + migração aditiva experimental de revisões; propostas futuras claramente separadas. Fonte verificável: `database/migrations/2026_11_15_000001_create_vaults_and_notes_tables.php` e migrations padrão de usuários, jobs e cache.
 
-## Modelo atual
+## Modelo anterior (notas legadas)
 
 ```mermaid
 erDiagram
@@ -63,16 +63,25 @@ Invariantes exigidos em todas as versões:
 4. A integridade entre metadados e arquivo deve poder ser reconciliada após falha.
 5. Uma nota arquivada não deve ser retornada por operações normais, mas seu conteúdo precisa ser recuperável conforme política.
 
-## Evolução proposta — sem migrations implementadas
+## Evolução proposta — além da migração experimental de revisões
 
 | Entidade futura | Campos/ideias candidatos | Dependências |
 | --- | --- | --- |
 | `vault_paths` ou `notes.path` | Caminho lógico único por cofre, árvore de pastas, normalização | ADR de caminhos e importação |
 | `attachments` | Id, cofre, caminho privado, MIME detectado, tamanho, hash, criador | Autorização, cotas e AV opcional |
-| `note_revisions` | Versão, hash, referência ao blob anterior, autor, timestamp | Política de retenção e recuperação |
+| Histórico adicional de revisão e autoria | Auditoria de autor, retenção e GC ainda não implementadas | Migração experimental, operação e backup |
 | `audit_events` | Ator, ação, escopo, recurso, resultado, correlação | Redaction e privacidade |
 | `api_tokens` | Token hasheado, escopos por cofre, expiração, revogação | Modelo de autorização e auditoria |
 | `webhook_subscriptions/deliveries` | Endpoint validado, eventos permitidos, tentativas e idempotência | SSRF, fila, observabilidade |
 | `backup_manifests` | Versão do formato, hashes, snapshot lógico, local seguro | RPO/RTO e restore testado |
 
 Não criar tabelas apenas porque aparecem nesta lista; aprovar formato, cardinalidades, índices, políticas de retenção e migrações em issue/ADR antes de codificar. Ver [armazenamento](ARMAZENAMENTO_E_INTEGRIDADE.md), [permissões](../SEGURANCA/MATRIZ_DE_ACESSO.md) e [requisitos](../ESCOPO_E_REQUISITOS.md).
+
+
+## Extensão implementada para revisão experimental
+
+A migration 2026_11_15_000002_create_note_revisions.php adiciona **notes.revision_id** (FK nullable para note_revisions) e **note_revisions**: id UUID PK; note_id UUID FK; vault_id FK; operation; base_version; version; title; sha256 de 64 caracteres; status; timestamps. Índice por nota e estado. O UUID do objeto privado é derivado exclusivamente da revisão, não de input de caminho de usuário.
+
+A revisão preparada é confirmada junto com o apontador atual numa transação. Status apenas **prepared** ou **committed** no protocolo inicial. Arquivamento e restore incrementam **notes.version** sem criar novo corpo; por isso a versão lógica pode exceder a versão de conteúdo da revisão referenciada.
+
+Notas antigas apresentam revision_id nulo e version >= 1; continuam legíveis sem checksum histórico, mas não editáveis até migração supervisionada. Notas recém-preparadas têm version 0 e não aparecem na listagem. Não executar migração automática de conteúdo. Ver [ADR 0002](../DECISOES/0002-consistencia-de-notas.md).

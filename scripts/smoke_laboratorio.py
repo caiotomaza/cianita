@@ -223,7 +223,7 @@ def main():
                 raise RuntimeError("Persistência PostgreSQL/Markdown não confirmada após restart")
             time.sleep(2)
     owner.api("GET", f"/storage/app/private/vaults/{vid}/notes/{nid}.md", expected=404)
-    owner.api("DELETE", path)
+    owner.api("DELETE", path, {"version": 2})
     owner.api("GET", path, expected=404)
     print("APROVADO: CLI, login, CSRF, CRUD, 401/403/409, restart, volumes e portas internas")
 

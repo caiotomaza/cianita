@@ -5,7 +5,7 @@
 - PHPUnit em `tests/Feature` e `tests/Unit`.
 - `VaultAndNoteTest` testa sessão obrigatória, criação de cofre/nota, isolamento entre usuários, leitor sem escrita, editor compartilhado, versão `409`, soft delete e resposta privada `no-store`.
 - CI roda lint PHP, testes SQLite, `vue-tsc`/build Vite e smoke test Docker com PostgreSQL. O job Docker também executa `scripts/smoke_laboratorio.py` com contas artificiais, login real/CSRF, CRUD, isolamento, HTTP 409, checagem de bindings e persistência após restart; confirmar o resultado no SHA exato.
-- **Não existe ainda** suíte E2E, testes de carga, testes de recuperação real, integração n8n, fault injection nem análise estática abrangente.
+- A correção experimental acrescenta NoteConsistencyTest com falhas injetadas, hashes e reconciliador, mais um job PostgreSQL 17 na CI, sujeito a verificação no SHA. O job também executará um harness SIGKILL real e isolado em PostgreSQL, sujeito à evidência de execução. **Ainda não há** simulação de falha elétrica/fsync/disco cheio, restauração em host limpo, suíte E2E de navegador ou análise estática abrangente.
 
 ## Estratégia futura por camadas
 
@@ -51,3 +51,7 @@ O `phpunit.xml` usa SQLite em memória; não substituir por ele a validação de
 ## Evidências e gates
 
 Guardar logs **saneados**, resultados de CI e testes de recovery por commit/tag. Nunca anexar notas, cookies, senhas ou tokens a bugs públicos. Falhas críticas de autorização, integridade e restore bloqueiam promoção à `main` mesmo se build e testes comuns passarem.
+
+## Verificação adicional da issue #3
+
+A suíte de integração cobre versões imutáveis, 409, cofre incorreto, 503 quando arquivo/hash falham, interrupção antes/depois de escrita e commit, repetição da reconciliação e arquivamento/restore. Exigir resultado do job PostgreSQL 17 no **commit exato**, além da suíte SQLite e lint/Pint. A segunda camada inicia processos PHP independentes: envia SIGKILL em checkpoints e disputa a edição entre dois escritores com conexões PostgreSQL separadas, exigindo uma vitória e um 409. As guardas restringem execução à CI e ao banco descartável. Mesmo SIGKILL não prova falha física, persistência pós-energia ou restauração independente. Esses riscos permanecem bloqueadores de homologação.

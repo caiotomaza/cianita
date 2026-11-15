@@ -55,7 +55,7 @@ Em caso de erro de escrita, divergência entre banco e Markdown, falta de volume
 1. Interromper **novas gravações** e preservar banco, storage e evidências. Não executar tarefas de limpeza ou migração exploratória.
 2. Identificar commit, fuso, ambiente, operação, horário e sintomas; coletar somente metadados não sensíveis dos logs.
 3. Inspecionar contêineres e recursos sem sobrescrever os volumes originais.
-4. Tratar divergência de consistência como **bloqueador** até análise. A [ADR 0002](DECISOES/0002-consistencia-de-notas.md) ainda não foi aceita/implementada.
+4. Tratar divergência de consistência como **bloqueador** até análise. A [ADR 0002](DECISOES/0002-consistencia-de-notas.md) documenta protocolo experimental, **não homologado**.
 5. Restaurar apenas por procedimento validado e usando cópia íntegra e isolada. **Não testar restore sobre o único conjunto de dados existente.**
 
 Não executar `docker compose down -v`, `docker volume prune`, exclusão de órfãos ou regeneração de `APP_KEY` para tentar reparar a instância.
@@ -69,3 +69,18 @@ Usar o mesmo identificador `YYYY-MM-DD_HH-MM-SS__acao__alvo` em `.artifacts/logs
 Só planejar o uso com dados importantes após fechar [#2 — build reprodutível](https://github.com/caiotomaza/cianita/issues/2), [#3 — consistência](https://github.com/caiotomaza/cianita/issues/3) e [#4 — backup/restauração](https://github.com/caiotomaza/cianita/issues/4), executar restauração em host limpo e cumprir os [gates de release](DESENVOLVIMENTO/DEFINICAO_DE_PRONTO.md).
 
 A arquitetura-alvo é NAS/homelab com Docker Compose, volumes protegidos, acesso por LAN/VPN autenticada ou proxy HTTPS bem configurado, banco/Redis não publicados, cópia externa e monitoramento. Essas características não comprovam implantação. Consulte o [plano por marcos](PLANEJAMENTO.md).
+
+## Diagnóstico experimental de revisões (sem dados privados em saída)
+
+Em laboratório, com banco/volume íntegros e acesso exclusivo do operador, executar **php artisan notes:reconcile** para inspecionar operações preparadas e referências atuais sem modificar banco ou arquivos. Retorno não zero indica pendências. Coletar somente IDs de operação/nota, contagens, SHA de commit da aplicação, horário/fuso, exit code e status, **nunca corpos Markdown**.
+
+O modo **php artisan notes:reconcile --apply** confirma somente operações preparadas com arquivo e hash válidos e versão-base inalterada. Executar após cópia consistente protegida e verificação de ausência de outros escritores; inspecionar a saída e repetir no mesmo conjunto **somente se o estado anterior for conhecido**. Ausência de arquivo, hash divergente, base desatualizada ou operação desconhecida exigem investigação manual — **nunca remover objetos órfãos automaticamente**.
+
+O comando não recria objetos perdidos, não recupera rascunhos nunca persistidos e não migra notas legadas. Para notas anteriores ao protocolo, a escrita retorna 503 até execução de processo de migração com backup/restauração previamente comprovados, conforme [ADR 0002](DECISOES/0002-consistencia-de-notas.md). Não executar reversão de migration de revisões com dados existentes; a restauração deve ser do par banco/volume em ambiente isolado.
+
+
+## Ensaio de interrupção em ambiente descartável
+
+A CI acrescenta uma execução separada de **tests/integration/crash_notes_process.php**, com SIGKILL real em processo filho, PostgreSQL 17 de teste e arquivo privado sintético. O harness recusa execução fora de CI, sem chave de teste explícita, ou fora de banco PostgreSQL local com nome terminando em _test. Não executá-lo no NAS/host de dados reais. Ele não faz rollback ou limpeza de volumes; o runner CI é descartável.
+
+Mesmo com status verde, esse teste não cobre queda de energia, cache do controlador, fsync, backup/restore completo nem sincronismo físico do PostgreSQL com o storage. Tais itens permanecem bloqueadores de produção.

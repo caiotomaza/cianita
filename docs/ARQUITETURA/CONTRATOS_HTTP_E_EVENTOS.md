@@ -16,7 +16,8 @@ Este documento separa os **endpoints implementados atualmente** do **desenho ain
 | POST | `/api/vaults/{vault}/notes` | Cria nota (`title` obrigatório, `body` opcional) |
 | GET | `/api/vaults/{vault}/notes/{note}` | Retorna nota e `body` |
 | PUT | `/api/vaults/{vault}/notes/{note}` | Atualiza `title`, `body` e `version` obrigatório |
-| DELETE | `/api/vaults/{vault}/notes/{note}` | Arquiva nota |
+| DELETE | `/api/vaults/{vault}/notes/{note}` | Arquiva nota; exige `version` inteiro no JSON | 
+| POST | `/api/vaults/{vault}/notes/{note}/restore` | Restaura nota arquivada; exige `version` no JSON |
 | GET | `/up` | Healthcheck básico do Laravel |
 
 ### Resposta típica de leitura (exemplo ilustrativo)
@@ -40,9 +41,9 @@ Campos extras, como timestamps, podem aparecer por serialização Eloquent. Não
 - `401`: requisição JSON sem sessão válida.
 - `403`: usuário autenticado sem autorização de cofre.
 - `404`: nota não encontrada ou vínculo com o cofre solicitado inválido.
-- `409`: versão de edição desatualizada.
+- `409`: versão desatualizada, gravação pendente ou estado de arquivamento divergente. O cliente preserva o rascunho.
 - `422`: validação da entrada falhou.
-- `503`: arquivo Markdown esperado indisponível.
+- `503`: arquivo Markdown esperado ausente/corrompido ou nota legada sem migração para escrita.
 
 Não inferir paginação, ETags, PATCH, versionamento semântico ou idempotência onde ainda não foram implementados. Respostas privadas de `/api/*` usam cabeçalhos `no-store`.
 

@@ -23,6 +23,12 @@ class Note extends Model
         return $this->belongsTo(Vault::class);
     }
 
+    public function revision(): BelongsTo
+    {
+        return $this->belongsTo(NoteRevision::class, 'revision_id');
+    }
+
+    // Apenas para leitura de notas anteriores ao protocolo de revisões.
     public function storagePath(): string
     {
         return 'vaults/'.$this->vault_id.'/notes/'.$this->getKey().'.md';

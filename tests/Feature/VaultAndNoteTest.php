@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Note;
 use App\Models\User;
 use App\Models\Vault;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -36,10 +37,11 @@ class VaultAndNoteTest extends TestCase
         ])->assertCreated();
 
         $noteId = $response->json('data.id');
-        Storage::disk('local')->assertExists('vaults/'.$vaultId.'/notes/'.$noteId.'.md');
+        $path = Note::findOrFail($noteId)->revision->storagePath();
+        Storage::disk('local')->assertExists($path);
         $this->assertSame(
             '# Meu conhecimento',
-            Storage::disk('local')->get('vaults/'.$vaultId.'/notes/'.$noteId.'.md'),
+            Storage::disk('local')->get($path),
         );
 
         $this->getJson('/api/vaults/'.$vaultId.'/notes/'.$noteId)
@@ -128,7 +130,7 @@ class VaultAndNoteTest extends TestCase
 
         $this->assertSame(
             'Segunda versao',
-            Storage::disk('local')->get('vaults/'.$vault->id.'/notes/'.$noteId.'.md'),
+            Storage::disk('local')->get(Note::findOrFail($noteId)->revision->storagePath()),
         );
     }
 
@@ -141,9 +143,9 @@ class VaultAndNoteTest extends TestCase
             'title' => 'Arquivar', 'body' => 'Nao destruir',
         ])->assertCreated()->json('data.id');
 
-        $this->deleteJson('/api/vaults/'.$vault->id.'/notes/'.$noteId)->assertOk();
+        $this->deleteJson('/api/vaults/'.$vault->id.'/notes/'.$noteId, ['version' => 1])->assertOk();
         $this->assertSoftDeleted('notes', ['id' => $noteId]);
-        Storage::disk('local')->assertExists('vaults/'.$vault->id.'/notes/'.$noteId.'.md');
+        Storage::disk('local')->assertExists(Note::withTrashed()->findOrFail($noteId)->revision->storagePath());
         $this->getJson('/api/vaults/'.$vault->id.'/notes/'.$noteId)->assertNotFound();
     }
 }

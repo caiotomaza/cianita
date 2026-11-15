@@ -46,7 +46,7 @@ Workflow: `.github/workflows/ci.yml`. Gatilhos: push em `main` e `develop`, e PR
 | `frontend` | Node 22, `package-lock.json`, `npm ci`, npm audit, TypeScript (`vue-tsc`) e build Vite |
 | `docker` | Config Compose, inspeção de imagens, build com lockfiles, PostgreSQL/Redis, migrations reais e HTTP `/up` + `/login` |
 
-Limitações: lockfiles fixam resoluções de pacotes, mas imagens Docker exigem revisão de digests para reprodutibilidade integral. Sem pipeline de publish/deploy, testes de backup, restore, segurança aprofundada, E2E ou host de homologação. Não declarar CD existente. A CI executou smoke tests com dados efêmeros; isso não cobre operação real.
+Limitações: lockfiles fixam pacotes e imagens de base referenciam digests verificados, mas isso não prova build bit a bit idêntico (ferramentas externas, extensões e repositorios podem variar). Sem pipeline de publish/deploy, testes de backup, restore, segurança aprofundada, E2E ou host de homologação. Não declarar CD existente. A CI executou smoke tests com dados efêmeros; isso não cobre operação real.
 
 ## Governança no GitHub — pendente ativar
 

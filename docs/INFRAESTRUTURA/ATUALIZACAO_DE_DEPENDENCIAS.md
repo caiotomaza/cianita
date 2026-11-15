@@ -7,7 +7,7 @@
 - `composer.json` define restrições PHP (PHP 8.3+) e pacotes; `composer.lock` registra as versões Composer resolvidas. Execute `composer install --no-interaction --prefer-dist`, não `composer update`, em CI, builds e implantação.
 - `package.json` define dependências Vue/TypeScript/Vite; `package-lock.json` é usado por `npm ci` em CI e no Dockerfile. Divergências entre manifesto e lockfile devem **falhar**, não gerar versões novas durante o build.
 - Use PHP 8.4 e Node 22 no ambiente de CI definido em `.github/workflows/ci.yml`. O runtime PHP é FrankenPHP/PHP 8.4; PostgreSQL 17 e Redis 7 servem de base ao laboratório.
-- Travas de pacotes não congelam automaticamente imagens Docker, versões do npm/Composer ou serviço externo de registro. Para reprodutibilidade de infraestrutura, registrar e revisar o **digest** real das imagens (`docker buildx imagetools inspect <imagem>`) e preferir `imagem@sha256:...` com valor validado em CI; não inventar hashes. A atualização de digest exige teste de build e compatibilidade de volume, sobretudo PostgreSQL.
+- Travas de pacotes não congelam automaticamente imagens Docker, versões do npm/Composer ou serviços externos. O Dockerfile e Compose usam tags identificáveis **com digests fixados** após inspeção real no GitHub Actions. Para cada atualização, conferir `docker buildx imagetools inspect <imagem>`, registrar o digest e substituir conscientemente `imagem@sha256:...`; não inventar hashes. A atualização de digest exige teste de build e compatibilidade de volume, sobretudo PostgreSQL.
 
 ## Atualização deliberada em branch
 

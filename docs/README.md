@@ -79,4 +79,4 @@ O índice abaixo continua sendo a navegação canônica. Não criar uma segunda 
 - O documento técnico deve ser atualizado **no mesmo PR** de uma mudança de comportamento, esquema, segurança ou infraestrutura.
 - Documentos usam português brasileiro, caminhos relativos e exemplos fictícios, sem dados privados.
 
-**Bloqueios atuais conhecidos:** lockfiles não versionados ([#2](https://github.com/caiotomaza/cianita/issues/2)); persistência DB/arquivos sem recuperação automática ([#3](https://github.com/caiotomaza/cianita/issues/3)); backup/restore consistente ausente ([#4](https://github.com/caiotomaza/cianita/issues/4)); proteção de branches ainda não configurada. Não usar a Cianita alpha como cópia única de notas importantes.
+**Bloqueios atuais conhecidos:** persistência DB/arquivos sem recuperação automática ([#3](https://github.com/caiotomaza/cianita/issues/3)); backup/restore consistente ausente ([#4](https://github.com/caiotomaza/cianita/issues/4)); proteção de branches ainda não configurada. Não usar a Cianita alpha como cópia única de notas importantes.

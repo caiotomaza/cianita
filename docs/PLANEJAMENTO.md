@@ -16,7 +16,7 @@ Preservar o monólito Laravel 13 + Vue 3/TypeScript, PostgreSQL para metadados, 
 | Documentação central | **Implementada** por PR [#8](https://github.com/caiotomaza/cianita/pull/8) | Preservar pastas e links existentes |
 | Autenticação/cofres/notas | **Implementado (base)**, com testes iniciais | Ampliar testes negativos e fluxos de erro |
 | Controle otimista de versão | **Implementado** (HTTP 409) | Recuperação do rascunho e falha de persistência ainda precisam de teste |
-| Lockfiles PHP/Node | **Bloqueador P0**, [#2](https://github.com/caiotomaza/cianita/issues/2) | Builds não são determinísticos |
+| Lockfiles PHP/Node | **Implementado na PR #11**, [#2](https://github.com/caiotomaza/cianita/issues/2) | Instalar por locks; monitorar advisories e atualizar digests deliberadamente |
 | Consistência banco/Markdown | **Bloqueador P0**, [#3](https://github.com/caiotomaza/cianita/issues/3) | A transação de banco não abrange arquivos |
 | Backup e restauração | **Bloqueador P0**, [#4](https://github.com/caiotomaza/cianita/issues/4) | Não usar como cópia única de notas importantes |
 | Proteção/limpeza de branches | **Pendente de configuração administrativa**, [#9](https://github.com/caiotomaza/cianita/issues/9) | Evitar merges incorretos e branches residuais |

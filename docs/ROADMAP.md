@@ -17,7 +17,7 @@
 
 ## Marco F1 — Confiabilidade do núcleo (bloqueadores P0)
 
-- [ ] [#2](https://github.com/caiotomaza/cianita/issues/2): lockfiles, instalação reprodutível, revisão de dependências e imagens.
+- [x] [#2](https://github.com/caiotomaza/cianita/issues/2): lockfiles gerados por Composer/npm, instalação por locks, auditorias e imagens base pinadas por digest; validado pela CI da PR #11.
 - [ ] [#3](https://github.com/caiotomaza/cianita/issues/3): journal/reconciliação DB + arquivos e testes de falhas injetadas.
 - [ ] [#4](https://github.com/caiotomaza/cianita/issues/4): backup consistente, checksums e restauração em host limpo.
 - [ ] Testes de autorização em rotas, arquivos, concorrência e recuperação.

@@ -2,7 +2,7 @@
 
 **Cianita** é uma aplicação web self-hosted para organizar conhecimento em cofres Markdown, inspirada na experiência de edição do Obsidian. O projeto utiliza **Laravel 13, PHP 8.4, Vue 3, TypeScript, PostgreSQL, Redis e Docker Compose**.
 
-> **Estado: base inicial (alpha).** Ainda não é uma alternativa completa ao Obsidian nem está pronta para guardar dados insubstituíveis. Não há rotina automática de backup/restauração nem lockfiles versionados.
+> **Estado: base inicial (alpha).** Ainda não é uma alternativa completa ao Obsidian nem está pronta para guardar dados insubstituíveis. Não há rotina automática de backup/restauração; os lockfiles PHP/Node já estão versionados, mas persistência e recuperação ainda exigem homologação.
 
 **Documentação do projeto:** [índice canônico](docs/README.md), [Handbook de engenharia](docs/HANDBOOK.md), [Runbook operacional](docs/RUNBOOK.md) e [plano de desenvolvimento/implantação](docs/PLANEJAMENTO.md). O estágio atual é alpha; as etapas propostas não representam funcionalidades implementadas.
 
@@ -96,12 +96,13 @@ O repositório inclui testes PHPUnit e CI para PHP 8.4 e Node 22. Um desenvolved
 
 ```shell
 composer install
-npm install
+npm ci
+npm run typecheck
 npm run build
 php artisan test
 ```
 
-Para testes PHP, configure `.env` e banco SQLite conforme `phpunit.xml`. O projeto ainda não inclui `composer.lock` ou `package-lock.json`, portanto **não há garantia de builds reproduzíveis**. A geração, revisão e inclusão dos lockfiles são necessárias antes de classificar uma versão como estável.
+Para testes PHP, configure `.env` e banco SQLite conforme `phpunit.xml`. `composer.lock` e `package-lock.json` são versionados desde a PR #11; utilize `composer install` e `npm ci`. O pinning das imagens de base não elimina todas as fontes de variação de build. Permanecem os bloqueadores de integridade e recuperação (#3 e #4).
 
 ## Segurança e dados
 

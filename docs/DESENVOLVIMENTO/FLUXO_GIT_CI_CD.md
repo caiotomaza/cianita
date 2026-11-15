@@ -42,11 +42,11 @@ Workflow: `.github/workflows/ci.yml`. Gatilhos: push em `main` e `develop`, e PR
 
 | Job | Validação real |
 | --- | --- |
-| `php` | PHP 8.4, Composer, lint e PHPUnit em SQLite em memória |
-| `frontend` | Node 22, TypeScript (`vue-tsc`) e build Vite |
-| `docker` | Config Compose, build, PostgreSQL/Redis, migrations, HTTP `/up` + `/login` e smoke autenticado com CLI/CRUD/CSRF/negações/409/restart (script `scripts/smoke_laboratorio.py`; confirmar status no SHA) |
+| `php` | PHP 8.4, `composer.lock`, instalação limpa, Composer audit, lint, Pint e PHPUnit em SQLite em memória |
+| `frontend` | Node 22, `package-lock.json`, `npm ci`, npm audit, TypeScript (`vue-tsc`) e build Vite |
+| `docker` | Config Compose, inspeção de imagens, build com lockfiles, PostgreSQL/Redis, migrations, HTTP `/up` + `/login` e smoke autenticado com CLI/CRUD/CSRF/negações/409/restart (script `scripts/smoke_laboratorio.py`; confirmar status no SHA) |
 
-Limitações: sem lockfiles, sem pipeline de publish/deploy, sem testes de backup, restore, segurança aprofundada, E2E ou host de homologação. Não declarar CD existente. A CI executou smoke tests com dados efêmeros; isso não cobre operação real.
+Limitações: lockfiles fixam pacotes e imagens de base referenciam digests verificados, mas isso não prova build bit a bit idêntico (ferramentas externas, extensões e repositorios podem variar). Sem pipeline de publish/deploy, testes de backup, restore, segurança aprofundada, E2E ou host de homologação. Não declarar CD existente. A CI executou smoke tests com dados efêmeros; isso não cobre operação real.
 
 ## Governança no GitHub — pendente ativar
 

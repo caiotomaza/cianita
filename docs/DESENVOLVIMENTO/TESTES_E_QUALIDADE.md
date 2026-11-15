@@ -4,7 +4,7 @@
 
 - PHPUnit em `tests/Feature` e `tests/Unit`.
 - `VaultAndNoteTest` testa sessão obrigatória, criação de cofre/nota, isolamento entre usuários, leitor sem escrita, editor compartilhado, versão `409`, soft delete e resposta privada `no-store`.
-- CI roda lint PHP, testes SQLite, `vue-tsc`/build Vite e smoke test Docker com PostgreSQL. O job Docker foi ampliado para executar `scripts/smoke_laboratorio.py` com contas artificiais, login real/CSRF, CRUD, isolamento, HTTP 409, checagem de portas e persistência após restart. Verificar o resultado do workflow no SHA exato antes de classificar como aprovado.
+- CI roda lint PHP, testes SQLite, `vue-tsc`/build Vite e smoke test Docker com PostgreSQL. O job Docker também executa `scripts/smoke_laboratorio.py` com contas artificiais, login real/CSRF, CRUD, isolamento, HTTP 409, checagem de bindings e persistência após restart; confirmar o resultado no SHA exato.
 - **Não existe ainda** suíte E2E, testes de carga, testes de recuperação real, integração n8n, fault injection nem análise estática abrangente.
 
 ## Estratégia futura por camadas
@@ -35,13 +35,18 @@
 ## Execução local existente
 
 ```bash
-composer install
-npm install
+composer validate --strict --no-check-publish
+composer install --no-interaction --prefer-dist
+composer audit --locked
+vendor/bin/pint --test
+npm ci
+npm audit --audit-level=high
+npm run typecheck
 npm run build
 php artisan test
 ```
 
-O `phpunit.xml` usa SQLite em memória; para ambiente local ajustar `.env`. Sem lockfiles, os comandos ainda não garantem builds idênticos. Ver [laboratório Docker](../INFRAESTRUTURA/IMPLANTACAO_E_AMBIENTES.md) para testes em contêiner.
+O `phpunit.xml` usa SQLite em memória; não substituir por ele a validação de migrations e HTTP contra PostgreSQL real no Compose. O `composer.lock` e o `package-lock.json` devem permanecer versionados. Em uma instalação limpa, usar `composer install` e `npm ci` (nunca resolver versões silenciosamente). Ver [atualização de dependências](../INFRAESTRUTURA/ATUALIZACAO_DE_DEPENDENCIAS.md). Ver [laboratório Docker](../INFRAESTRUTURA/IMPLANTACAO_E_AMBIENTES.md) para testes em contêiner.
 
 ## Evidências e gates
 

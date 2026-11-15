@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  php:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, dom, pdo_sqlite, sqlite3, xml, curl, fileinfo
+          coverage: none
+      - name: Instalar dependencias PHP
+        run: composer install --no-interaction --prefer-dist --no-progress
+      - name: Verificar sintaxe PHP
+        run: find app bootstrap database routes -name '*.php' -print0 | xargs -0 -n1 php -l
+      - name: Executar testes
+        run: |
+          cp .env.example .env
+          php artisan key:generate --force
+          php artisan test
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Instalar dependencias JS
+        run: npm install --no-audit --no-fund
+      - name: Typecheck e build
+        run: npm run build
